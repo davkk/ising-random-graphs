@@ -1,0 +1,18 @@
+[general]
+shells = IPythonShell,ClassicPythonShell
+verbose = true
+
+[apps]
+
+[plotting]
+backend = matplotlib
+layout = fruchterman_reingold
+mark_groups = false
+palette = rainbow
+wrap_labels = false
+
+[remote]
+
+[shell]
+ipython.inlining.plot = true
+
