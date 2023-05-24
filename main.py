@@ -1,13 +1,20 @@
 import concurrent.futures
+import queue
 import random
 from collections import defaultdict
+from pathlib import Path
+from queue import Empty
+from typing import Tuple
 
 import igraph as ig
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import typer
 from igraph import Graph
 from numpy.typing import NDArray
+
+app = typer.Typer()
 
 
 def simulate(
@@ -44,22 +51,48 @@ def simulate(
     return beta, energy / N, magnet / N
 
 
-def main(
+def save_datapoints(*, queue: queue.Queue, output_file: str):
+    with open(output_file, "a") as file:
+        while True:
+            try:
+                item = queue.get_nowait()
+                if item is None:
+                    break
+
+
+            except Empty:
+                continue
+
+            beta, avg_E, avg_M = item
+            file.write(f"{beta:.5f},{avg_E:.5f},{avg_M:.5f}\n")
+            file.flush()
+
+
+@app.command()
+def run(
+    datapoints: int = typer.Option(
+        default=50,
+        help="Number of datapoints",
+    ),
     steps: int = typer.Option(
         default=1000,
         help="Number of steps",
     ),
     nodes: int = typer.Option(
-        default=100,
+        default=64,
         help="Number of nodes",
     ),
     m: int = typer.Option(
-        default=3,
+        default=2,
         help="Barabasi m parameter",
     ),
     repeat: int = typer.Option(
-        default=1,
+        default=3,
         help="Number of repetitions for each beta",
+    ),
+    beta: Tuple[float, float] = typer.Option(
+        default=(0.1, 0.6),
+        help="Beta range",
     ),
 ):
     ig.config.load(".igraphrc")
@@ -67,29 +100,48 @@ def main(
 
     graph: Graph = Graph.Barabasi(n=nodes, m=m)
     spins: NDArray[np.int_] = np.random.choice([-1, 1], size=graph.vcount())
-    betas: NDArray[np.float64] = np.linspace(0.01, 0.6, 100)
+    betas: NDArray[np.float64] = np.linspace(*beta, datapoints)
 
-    data: list[tuple[float, float, float]] = []
+    filename = f"data-{nodes=}-{m=}-{steps=}-{repeat=}.csv"
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        results = [
-            executor.submit(
-                simulate,
-                steps=steps,
-                spins=spins,
-                graph=graph,
-                beta=beta,
-            )
-            for beta in betas
-            for _ in range(repeat)
-        ]
+    with open(filename, "w") as f:
+        f.write("beta,energy,magnet\n")
 
-        for f in concurrent.futures.as_completed(results):
-            data.append(f.result())
+    write_queue = queue.Queue()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as writer:
+        writer.submit(
+            save_datapoints,
+            queue=write_queue,
+            output_file=filename,
+        )
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = [
+                executor.submit(
+                    simulate,
+                    steps=steps,
+                    spins=spins,
+                    graph=graph,
+                    beta=beta,
+                )
+                for beta in betas
+                for _ in range(repeat)
+            ]
+
+            for f in concurrent.futures.as_completed(results):
+                result = f.result()
+                write_queue.put_nowait(result)
+
+            write_queue.put(None)
 
 
+@app.command()
+def plot(
+    filename: str = typer.Argument(Path, help="Path to data"),
+):
+    data = list(pd.read_csv(filename).itertuples(index=False))
 
-def plot(data: list[tuple[float, float, float]]):
     _, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
 
     averaged_E = defaultdict(list)
@@ -129,4 +181,4 @@ def plot(data: list[tuple[float, float, float]]):
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()
