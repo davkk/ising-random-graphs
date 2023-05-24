@@ -1,4 +1,6 @@
+import concurrent.futures
 import random
+from collections import defaultdict
 
 import igraph as ig
 import matplotlib.pyplot as plt
@@ -6,8 +8,6 @@ import numpy as np
 import typer
 from igraph import Graph
 from numpy.typing import NDArray
-
-ig.config.load(".igraphrc")
 
 
 def simulate(
@@ -17,10 +17,14 @@ def simulate(
     graph: Graph,
     beta: float,
 ):
-    neighbors = [spins[graph.neighbors(i)].sum() for i in range(graph.vcount())]
+    print(f"{beta=:.3f}")
 
-    energy = -np.dot(spins, neighbors) / 2
-    magnet = spins.sum()
+    neighbors = [
+        np.sum(spins[graph.neighbors(i)]) for i in range(graph.vcount())
+    ]
+
+    energy = -spins @ neighbors / 2
+    magnet = np.sum(spins)
 
     N = graph.vcount()
 
@@ -37,7 +41,7 @@ def simulate(
                 energy += dE
                 magnet += dM
 
-    return energy / N, magnet / N
+    return beta, energy / N, magnet / N
 
 
 def main(
@@ -58,46 +62,69 @@ def main(
         help="Number of repetitions for each beta",
     ),
 ):
+    ig.config.load(".igraphrc")
     random.seed(2001)
 
     graph: Graph = Graph.Barabasi(n=nodes, m=m)
     spins: NDArray[np.int_] = np.random.choice([-1, 1], size=graph.vcount())
-    betas: NDArray[np.float64] = np.linspace(0.01, 0.5, 20)
+    betas: NDArray[np.float64] = np.linspace(0.01, 0.6, 100)
 
-    data: list[DataPoint] = []
+    data: list[tuple[float, float, float]] = []
 
-    for beta in betas:
-        print(f"{beta=:.3f}")
-
-        energies = []
-        magnets = []
-
-        for _ in range(repeat):
-            avg_E, avg_M = simulate(
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = [
+            executor.submit(
+                simulate,
                 steps=steps,
-                spins=spins.copy(),
-                graph=graph.copy(),
+                spins=spins,
+                graph=graph,
                 beta=beta,
             )
+            for beta in betas
+            for _ in range(repeat)
+        ]
 
-            energies.append(avg_E)
-            magnets.append(avg_M)
+        for f in concurrent.futures.as_completed(results):
+            data.append(f.result())
 
-        data.append((beta, np.mean(energies), np.mean(magnets)))
 
+
+def plot(data: list[tuple[float, float, float]]):
     _, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
 
+    averaged_E = defaultdict(list)
+    for beta, avg_E, _ in data:
+        averaged_E[beta].append(avg_E)
+    averaged_E = dict(sorted(averaged_E.items()))
+
+    ax_energy.scatter(
+        [beta for beta, _, _ in data],
+        [np.mean(avg_E) for _, avg_E, _ in data],
+    )
     ax_energy.plot(
-        betas,
-        [avg_E for _, avg_E, _ in data],
-        marker="o",
+        averaged_E.keys(),
+        [np.mean(energies) for energies in averaged_E.values()],
+        color="orange",
+    )
+    ax_energy.set_title("Avg Energy")
+
+    averaged_M = defaultdict(list)
+    for beta, _, avg_M in data:
+        averaged_M[beta].append(avg_M)
+    averaged_M = dict(sorted(averaged_M.items()))
+
+    ax_magnet.scatter(
+        [beta for beta, _, _ in data],
+        [np.mean(avg_M) for _, _, avg_M in data],
     )
     ax_magnet.plot(
-        betas,
-        [avg_M for _, _, avg_M in data],
-        marker="o",
+        averaged_M.keys(),
+        [np.mean(magents) for magents in averaged_M.values()],
+        color="orange",
     )
+    ax_magnet.set_title("Avg Magnetization")
 
+    plt.tight_layout()
     plt.show()
 
 
