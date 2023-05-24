@@ -1,5 +1,4 @@
 import random
-from dataclasses import dataclass
 
 import igraph as ig
 import matplotlib.pyplot as plt
@@ -11,48 +10,23 @@ from numpy.typing import NDArray
 ig.config.load(".igraphrc")
 
 
-def total_energy(*, spins: NDArray[np.int8], graph: Graph) -> float:
-    energy: float = 0
-
-    for vertex in graph.vs:  # type: ignore
-        energy += spins[vertex.index] * np.sum(graph.neighbors(vertex.index))
-
-    return energy / 2
-
-
-def sum_neighbors(*, spins: NDArray[np.int8], neighbors: list[int]) -> float:
-    sum: float = 0
-
-    for neighbor in neighbors:
-        sum += spins[neighbor]
-
-    return sum
-
-
-@dataclass
-class Result:
-    avg_energy: float
-    avg_magnet: float
-
-
 def simulate(
     *,
     steps: int,
-    spins: NDArray[np.int8],
+    spins: NDArray[np.int_],
     graph: Graph,
     beta: float,
 ):
-    energy = total_energy(spins=spins, graph=graph)
+    neighbors = [spins[graph.neighbors(i)].sum() for i in range(graph.vcount())]
+
+    energy = -np.dot(spins, neighbors) / 2
     magnet = spins.sum()
 
     N = graph.vcount()
 
     for _ in range(steps):
         for idx, spin in enumerate(spins):
-            neighbors = sum_neighbors(
-                spins=spins,
-                neighbors=graph.neighbors(idx),
-            )
+            neighbors = spins[graph.neighbors(idx)].sum()
 
             dE = 2 * spin * neighbors
             dM = -2 * spin
@@ -63,17 +37,7 @@ def simulate(
                 energy += dE
                 magnet += dM
 
-    return Result(
-        avg_energy=energy / N,
-        avg_magnet=magnet / N,
-    )
-
-
-@dataclass
-class DataPoint:
-    beta: float
-    avg_energy: np.float64
-    avg_magnet: np.float64
+    return energy / N, magnet / N
 
 
 def main(
@@ -89,46 +53,50 @@ def main(
         default=3,
         help="Barabasi m parameter",
     ),
+    repeat: int = typer.Option(
+        default=1,
+        help="Number of repetitions for each beta",
+    ),
 ):
     random.seed(2001)
 
     graph: Graph = Graph.Barabasi(n=nodes, m=m)
-    spins: NDArray[np.int8] = np.random.choice([-1, 1], size=graph.vcount())
+    spins: NDArray[np.int_] = np.random.choice([-1, 1], size=graph.vcount())
+    betas: NDArray[np.float64] = np.linspace(0.01, 0.5, 20)
 
     data: list[DataPoint] = []
 
-    # betas: NDArray[np.float64] = np.arange(0.01, 0.7, 0.03)
-    betas: NDArray[np.float64] = np.linspace(0.01, 0.5, 100)
-
     for beta in betas:
-        print(f"{beta=}")
+        print(f"{beta=:.3f}")
 
         energies = []
         magnets = []
 
-        for _ in range(100):
-            result = simulate(
+        for _ in range(repeat):
+            avg_E, avg_M = simulate(
                 steps=steps,
-                spins=spins,
-                graph=graph,
+                spins=spins.copy(),
+                graph=graph.copy(),
                 beta=beta,
             )
 
-            energies.append(result.avg_energy)
-            magnets.append(result.avg_magnet)
+            energies.append(avg_E)
+            magnets.append(avg_M)
 
-        data.append(
-            DataPoint(
-                beta=beta,
-                avg_energy=np.mean(energies),
-                avg_magnet=np.mean(magnets),
-            )
-        )
+        data.append((beta, np.mean(energies), np.mean(magnets)))
 
     _, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
 
-    ax_energy.scatter(betas, [d.avg_energy for d in data])
-    ax_magnet.scatter(betas, [d.avg_magnet for d in data])
+    ax_energy.plot(
+        betas,
+        [avg_E for _, avg_E, _ in data],
+        marker="o",
+    )
+    ax_magnet.plot(
+        betas,
+        [avg_M for _, _, avg_M in data],
+        marker="o",
+    )
 
     plt.show()
 
