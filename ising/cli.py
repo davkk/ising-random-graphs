@@ -40,10 +40,6 @@ def save_datapoints(*, queue: queue.Queue, output_file: str):
 
 @app.command()
 def run(
-    datapoints: int = typer.Option(
-        default=50,
-        help="Number of datapoints",
-    ),
     steps: int = typer.Option(
         default=1000,
         help="Number of steps",
@@ -60,6 +56,10 @@ def run(
         default=3,
         help="Number of repetitions for each beta",
     ),
+    datapoints: int = typer.Option(
+        default=50,
+        help="Number of datapoints",
+    ),
     beta: Tuple[float, float] = typer.Option(
         default=(0.1, 0.6),
         help="Beta range",
@@ -72,7 +72,7 @@ def run(
     spins: NDArray[np.int_] = np.random.choice([-1, 1], size=graph.vcount())
     betas: NDArray[np.float64] = np.linspace(*beta, datapoints)
 
-    filename = f"data-{nodes=}-{m=}-{steps=}-{repeat=}.csv"
+    filename = Path("data") / f"data-{nodes=}-{m=}-{steps=}-{repeat=}.csv"
 
     with open(filename, "w") as f:
         f.write("beta,energy,magnet\n")
