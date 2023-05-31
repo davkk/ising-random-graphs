@@ -1,39 +1,34 @@
 import random
 
 import numpy as np
-from igraph import Graph
-from numpy.typing import NDArray
+
+from .domain import Lattice, Parameters
 
 
 def simulate(
     *,
-    steps: int,
-    spins: NDArray[np.int_],
-    graph: Graph,
-    beta: float,
+    params: Parameters,
+    lattice: Lattice,
+    num_repeat: int,
 ):
-    print(f"{beta=:.3f}")
+    print(f"{num_repeat + 1}: beta={params.beta}")
 
-    neighbors = [
-        np.sum(spins[graph.neighbors(i)]) for i in range(graph.vcount())
-    ]
+    N = lattice.graph.vcount()
 
-    energy = -spins @ neighbors / 2
-    magnet = np.sum(spins)
+    energy = lattice.initial_E
+    magnet = lattice.initial_M
 
-    N = graph.vcount()
+    for _ in range(params.steps):
+        for idx, spin in enumerate(lattice.spins):
+            spin_neighbors = np.sum(lattice.spins[lattice.graph.neighbors(idx)])
 
-    for _ in range(steps):
-        for idx, spin in enumerate(spins):
-            neighbors = spins[graph.neighbors(idx)].sum()
-
-            dE = 2 * spin * neighbors
+            dE = 2 * spin * spin_neighbors
             dM = -2 * spin
 
-            if random.random() < min(np.exp(-dE * beta), 1) or dE < 0:
-                spins[idx] = -spins[idx]
+            if random.random() < min(np.exp(-dE * params.beta), 1) or dE < 0:
+                lattice.spins[idx] = -lattice.spins[idx]
 
                 energy += dE
                 magnet += dM
 
-    return beta, energy / N, magnet / N
+    return params.beta, energy / N, magnet / N

@@ -14,6 +14,7 @@ import typer
 from igraph import Graph
 from numpy.typing import NDArray
 
+from .domain import Lattice, Parameters
 from .ising import simulate
 
 app = typer.Typer(
@@ -44,7 +45,7 @@ def run(
         default=1000,
         help="Number of steps",
     ),
-    nodes: int = typer.Option(
+    n: int = typer.Option(
         default=64,
         help="Number of nodes",
     ),
@@ -66,13 +67,12 @@ def run(
     ),
 ):
     ig.config.load(".igraphrc")
-    random.seed(2001)
 
-    graph: Graph = Graph.Barabasi(n=nodes, m=m)
-    spins: NDArray[np.int_] = np.random.choice([-1, 1], size=graph.vcount())
+    random.seed(2001)
+    lattice: Lattice = Lattice.create_ba(n=n, m=m)
     betas: NDArray[np.float64] = np.linspace(*beta, datapoints)
 
-    filename = Path("data") / f"data-{nodes=}-{m=}-{steps=}-{repeat=}.csv"
+    filename = Path("data") / f"data-{n=}-{m=}-{steps=}-{repeat=}.csv"
 
     with open(filename, "w") as f:
         f.write("beta,energy,magnet\n")
@@ -87,16 +87,16 @@ def run(
         )
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
+            print(f"Starting the simulation...")
             results = [
                 executor.submit(
                     simulate,
-                    steps=steps,
-                    spins=spins,
-                    graph=graph,
-                    beta=beta,
+                    params=Parameters(steps=steps, beta=beta),
+                    lattice=lattice.copy(),
+                    num_repeat=num_repeat,
                 )
                 for beta in betas
-                for _ in range(repeat)
+                for num_repeat in range(repeat)
             ]
 
             for f in concurrent.futures.as_completed(results):
@@ -127,8 +127,11 @@ def plot(
         averaged_E.keys(),
         [np.mean(energies) for energies in averaged_E.values()],
         color="orange",
+        label="averaged",
     )
     ax_energy.set_title("Avg Energy")
+    ax_energy.set_xlabel("Beta")
+    ax_energy.set_ylabel("<E>")
 
     averaged_M = defaultdict(list)
     for beta, _, avg_M in data:
@@ -136,16 +139,21 @@ def plot(
     averaged_M = dict(sorted(averaged_M.items()))
 
     ax_magnet.scatter(
-        [beta for beta, _, _ in data],
+        [1 / beta for beta, _, _ in data],
         [np.mean(avg_M) for _, _, avg_M in data],
     )
     ax_magnet.plot(
-        averaged_M.keys(),
+        [1 / beta for beta in averaged_M.keys()],
         [np.mean(magents) for magents in averaged_M.values()],
         color="orange",
+        label="averaged",
     )
     ax_magnet.set_title("Avg Magnetization")
+    ax_magnet.set_xlabel("T")
+    ax_magnet.set_ylabel("<M>")
 
+    ax_energy.legend()
+    ax_magnet.legend()
     plt.tight_layout()
     plt.show()
 
