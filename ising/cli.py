@@ -1,11 +1,11 @@
 import concurrent.futures
+import os
 import queue
 from collections import defaultdict
 from pathlib import Path
 from queue import Empty
 from typing import Any, Tuple
 
-import igraph as ig
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -64,14 +64,11 @@ def run(
         help="Beta range",
     ),
 ):
-    ig.config.load(".igraphrc")
-
     np.random.seed(2001)
 
-    # graph: nx.Graph = nx.barabasi_albert_graph(n=n, m=m)
-    graph: nx.Graph = nx.grid_2d_graph(n, n)
+    graph: nx.Graph = nx.barabasi_albert_graph(n=n, m=m)
     edges = nx.to_numpy_array(graph, dtype=int)
-    spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=n*n)
+    spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=n)
 
     init_E = ising.calc_E(spins=spins, edges=edges)
     init_M = ising.calc_M(spins=spins)
@@ -85,35 +82,39 @@ def run(
 
     write_queue = queue.Queue()
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as writer:
+    with (
+        concurrent.futures.ThreadPoolExecutor(max_workers=1) as writer,
+        concurrent.futures.ProcessPoolExecutor(
+            max_workers=os.cpu_count() - 1
+        ) as executor,
+    ):
         writer.submit(
             save_datapoints,
             queue=write_queue,
             output_file=filename,
         )
 
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            print(f"Starting the simulation...")
-            results = [
-                executor.submit(
-                    ising.simulate,
-                    steps=steps,
-                    beta=beta,
-                    edges=edges,
-                    spins=spins.copy(),
-                    init_E=init_E,
-                    init_M=init_M,
-                    num_repeat=num_repeat,
-                )
-                for beta in betas
-                for num_repeat in range(repeat)
-            ]
+        print(f"Starting the simulation...")
+        results = [
+            executor.submit(
+                ising.simulate,
+                steps=steps,
+                beta=beta,
+                spins=spins.copy(),
+                edges=edges,
+                init_E=init_E,
+                init_M=init_M,
+                num_repeat=num_repeat,
+            )
+            for beta in betas
+            for num_repeat in range(repeat)
+        ]
 
-            for f in concurrent.futures.as_completed(results):
-                result = f.result()
-                write_queue.put_nowait(result)
+        for f in concurrent.futures.as_completed(results):
+            result = f.result()
+            write_queue.put_nowait(result)
 
-            write_queue.put(None)
+        write_queue.put(None)
 
 
 @app.command()
