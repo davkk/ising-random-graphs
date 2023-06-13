@@ -63,6 +63,10 @@ def run(
         default=(0.1, 0.6),
         help="Beta range",
     ),
+    interact: int = typer.Option(
+        default=3,
+        help="Range of interactions",
+    ),
 ):
     np.random.seed(2001)
 
@@ -70,7 +74,7 @@ def run(
     edges = nx.to_numpy_array(graph, dtype=int)
     spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=n)
 
-    init_E = ising.calc_E(spins=spins, edges=edges)
+    init_E = ising.calc_E(interact=interact, spins=spins, edges=edges)
     init_M = ising.calc_M(spins=spins)
 
     betas: npt.NDArray[Any] = np.linspace(*beta, datapoints)
