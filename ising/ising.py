@@ -6,23 +6,18 @@ import numpy.typing as npt
 from numba import jit
 
 
-def _sum_neighbors(
-    *,
-    edges: npt.NDArray[Any],
-    spins: npt.NDArray[Any],
-) -> list[float]:
-    return [np.sum(spins[np.where(edges[i])]) for i in range(spins.shape[0])]
-
-
 def calc_E(*, edges: npt.NDArray[Any], spins: npt.NDArray[Any]) -> float:
-    return -spins @ _sum_neighbors(edges=edges, spins=spins) / 2
+    neighbors = np.array(
+        [np.sum(spins[np.where(edges[i])]) for i in range(spins.shape[0])]
+    )
+    return -spins @ neighbors / 2
 
 
 def calc_M(*, spins: npt.NDArray[Any]) -> float:
     return np.sum(spins)
 
 
-@jit(nopython=True, nogil=True, cache=True)
+@jit(nopython=True, fastmath=True)
 def simulate(
     *,
     steps: int,
@@ -31,7 +26,7 @@ def simulate(
     edges: npt.NDArray[Any],
     init_E: float,
     init_M: float,
-    num_repeat: int
+    num_repeat: int,
 ):
     print(num_repeat + 1, ":", beta)
 
