@@ -6,18 +6,7 @@ import numpy.typing as npt
 from numba import jit
 
 
-def calc_E(
-    *, interact: int, edges: npt.NDArray[Any], spins: npt.NDArray[Any]
-) -> float:
-    layers = np.empty((interact, edges.shape[0], edges.shape[1]))
-
-    for i in range(interact):
-        layers[i] = np.linalg.matrix_power(edges, i + 1)
-
-    J_matrix = np.amax(layers, axis=0)
-
-    spins = J_matrix @ spins
-
+def calc_E(*, edges: npt.NDArray[Any], spins: npt.NDArray[Any]) -> float:
     neighbors = np.array(
         [np.sum(spins[np.where(edges[i])]) for i in range(spins.shape[0])]
     )

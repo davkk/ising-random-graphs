@@ -1,6 +1,7 @@
 import concurrent.futures
 import os
 import queue
+import sys
 from collections import defaultdict
 from pathlib import Path
 from queue import Empty
@@ -71,10 +72,20 @@ def run(
     np.random.seed(2001)
 
     graph: nx.Graph = nx.barabasi_albert_graph(n=n, m=m)
+
     edges = nx.to_numpy_array(graph, dtype=int)
     spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=n)
 
-    init_E = ising.calc_E(interact=interact, spins=spins, edges=edges)
+    layers = np.empty((interact, edges.shape[0], edges.shape[1]))
+
+    for i in range(interact):
+        layers[i] = np.linalg.matrix_power(edges, i + 1)
+
+    J_matrix = np.amax(layers, axis=0)
+
+    edges = J_matrix * edges
+
+    init_E = ising.calc_E(spins=spins, edges=edges)
     init_M = ising.calc_M(spins=spins)
 
     betas: npt.NDArray[Any] = np.linspace(*beta, datapoints)
@@ -135,18 +146,18 @@ def plot(
     averaged_E = dict(sorted(averaged_E.items()))
 
     ax_energy.scatter(
-        [1 / beta for beta, _, _ in data],
+        [beta for beta, _, _ in data],
         [np.mean(avg_E) for _, avg_E, _ in data],
         s=1,
     )
     ax_energy.plot(
-        [1 / beta for beta in averaged_E.keys()],
+        [beta for beta in averaged_E.keys()],
         [np.mean(energies) for energies in averaged_E.values()],
         color="orange",
         label="averaged",
     )
     ax_energy.set_title("Avg Energy")
-    ax_energy.set_xlabel("T")
+    ax_energy.set_xlabel("Beta")
     ax_energy.set_ylabel("<E>")
 
     averaged_M = defaultdict(list)
