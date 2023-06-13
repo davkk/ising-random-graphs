@@ -1,21 +1,19 @@
 import concurrent.futures
 import queue
-import random
 from collections import defaultdict
 from pathlib import Path
 from queue import Empty
-from typing import Tuple
+from typing import Any, Tuple
 
 import igraph as ig
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
 import typer
-from igraph import Graph
-from numpy.typing import NDArray
+from numpy import typing as npt
 
-from .domain import Lattice, Parameters
-from .ising import simulate
+from . import ising
 
 app = typer.Typer(
     add_completion=False,
@@ -68,9 +66,17 @@ def run(
 ):
     ig.config.load(".igraphrc")
 
-    random.seed(2001)
-    lattice: Lattice = Lattice.create_ba(n=n, m=m)
-    betas: NDArray[np.float64] = np.linspace(*beta, datapoints)
+    np.random.seed(2001)
+
+    # graph: nx.Graph = nx.barabasi_albert_graph(n=n, m=m)
+    graph: nx.Graph = nx.grid_2d_graph(n, n)
+    edges = nx.to_numpy_array(graph, dtype=int)
+    spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=n*n)
+
+    init_E = ising.calc_E(spins=spins, edges=edges)
+    init_M = ising.calc_M(spins=spins)
+
+    betas: npt.NDArray[Any] = np.linspace(*beta, datapoints)
 
     filename = Path("data") / f"data-{n=}-{m=}-{steps=}-{repeat=}.csv"
 
@@ -90,9 +96,13 @@ def run(
             print(f"Starting the simulation...")
             results = [
                 executor.submit(
-                    simulate,
-                    params=Parameters(steps=steps, beta=beta),
-                    lattice=lattice.copy(),
+                    ising.simulate,
+                    steps=steps,
+                    beta=beta,
+                    edges=edges,
+                    spins=spins.copy(),
+                    init_E=init_E,
+                    init_M=init_M,
                     num_repeat=num_repeat,
                 )
                 for beta in betas
@@ -120,17 +130,18 @@ def plot(
     averaged_E = dict(sorted(averaged_E.items()))
 
     ax_energy.scatter(
-        [beta for beta, _, _ in data],
+        [1 / beta for beta, _, _ in data],
         [np.mean(avg_E) for _, avg_E, _ in data],
+        s=1,
     )
     ax_energy.plot(
-        averaged_E.keys(),
+        [1 / beta for beta in averaged_E.keys()],
         [np.mean(energies) for energies in averaged_E.values()],
         color="orange",
         label="averaged",
     )
     ax_energy.set_title("Avg Energy")
-    ax_energy.set_xlabel("Beta")
+    ax_energy.set_xlabel("T")
     ax_energy.set_ylabel("<E>")
 
     averaged_M = defaultdict(list)
@@ -141,6 +152,7 @@ def plot(
     ax_magnet.scatter(
         [1 / beta for beta, _, _ in data],
         [np.mean(avg_M) for _, _, avg_M in data],
+        s=1,
     )
     ax_magnet.plot(
         [1 / beta for beta in averaged_M.keys()],

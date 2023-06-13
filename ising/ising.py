@@ -1,34 +1,56 @@
 import random
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
+from numba import jit
 
-from .domain import Lattice, Parameters
+
+def _sum_neighbors(
+    *,
+    edges: npt.NDArray[Any],
+    spins: npt.NDArray[Any],
+) -> list[float]:
+    return [np.sum(spins[np.where(edges[i])]) for i in range(spins.shape[0])]
 
 
+def calc_E(*, edges: npt.NDArray[Any], spins: npt.NDArray[Any]) -> float:
+    return -spins @ _sum_neighbors(edges=edges, spins=spins) / 2
+
+
+def calc_M(*, spins: npt.NDArray[Any]) -> float:
+    return np.sum(spins)
+
+
+@jit(nopython=True, nogil=True, cache=True)
 def simulate(
     *,
-    params: Parameters,
-    lattice: Lattice,
-    num_repeat: int,
+    steps: int,
+    beta: float,
+    spins: npt.NDArray[Any],
+    edges: npt.NDArray[Any],
+    init_E: float,
+    init_M: float,
+    num_repeat: int
 ):
-    print(f"{num_repeat + 1}: beta={params.beta}")
+    print(num_repeat + 1, ":", beta)
 
-    N = lattice.graph.vcount()
+    N = float(spins.shape[0])
 
-    energy = lattice.initial_E
-    magnet = lattice.initial_M
+    energy = init_E
+    magnet = init_M
 
-    for _ in range(params.steps):
-        for idx, spin in enumerate(lattice.spins):
-            spin_neighbors = np.sum(lattice.spins[lattice.graph.neighbors(idx)])
+    for _ in range(steps):
+        for idx, spin in enumerate(spins):
+            spin_neighbors = np.sum(spins[np.where(edges[idx])])
 
-            dE = 2 * spin * spin_neighbors
-            dM = -2 * spin
+            dE = 2.0 * spin * spin_neighbors
+            dM = -2.0 * spin
 
-            if random.random() < min(np.exp(-dE * params.beta), 1) or dE < 0:
-                lattice.spins[idx] = -lattice.spins[idx]
+            if random.random() < min(np.exp(-dE * beta), 1) or dE < 0.0:
+                spins[idx] = -spins[idx]
 
                 energy += dE
                 magnet += dM
 
-    return params.beta, energy / N, magnet / N
+    return beta, energy / N, magnet / N

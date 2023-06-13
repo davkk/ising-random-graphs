@@ -1,14 +1,10 @@
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
-from igraph import Graph
+from networkx import Graph, barabasi_albert_graph
+
 from numpy.typing import NDArray
-
-
-@dataclass
-class Parameters:
-    steps: int
-    beta: float
 
 
 @dataclass
@@ -21,17 +17,17 @@ class Lattice:
     @staticmethod
     def sum_neighbors(
         *,
-        spins: NDArray[np.int_],
+        spins: NDArray[Any],
         graph: Graph,
     ) -> list[int]:
         return [
-            np.sum(spins[graph.neighbors(i)]) for i in range(graph.vcount())
+            np.sum(spins[graph.neighbors(i)]) for i in range(graph.order())
         ]
 
     @classmethod
     def create_ba(cls, *, n, m):
-        graph: Graph = Graph.Barabasi(n=n, m=m)
-        spins: NDArray[np.int_] = np.random.choice([-1, 1], size=n)
+        graph: Graph = barabasi_albert_graph(n=n, m=m, seed=2001)
+        spins: NDArray[Any] = np.random.choice([-1, 1], size=n)
 
         energy = -spins @ cls.sum_neighbors(spins=spins, graph=graph) / 2
         magnet = np.sum(spins)
