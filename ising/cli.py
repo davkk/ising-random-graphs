@@ -90,7 +90,9 @@ def run(
 
     betas: npt.NDArray[Any] = np.linspace(*beta, datapoints)
 
-    filename = Path("data") / f"data-{n=}-{m=}-{steps=}-{repeat=}.csv"
+    filename = (
+        Path("data") / f"data-{n=}-{m=}-{steps=}-{repeat=}-{interact=}.csv"
+    )
 
     with open(filename, "w") as f:
         f.write("beta,energy,magnet\n")
@@ -138,7 +140,7 @@ def plot(
 ):
     data = list(pd.read_csv(filename).itertuples(index=False))
 
-    _, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
+    fig, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
 
     averaged_E = defaultdict(list)
     for beta, avg_E, _ in data:
@@ -156,7 +158,6 @@ def plot(
         color="orange",
         label="averaged",
     )
-    ax_energy.set_title("Avg Energy")
     ax_energy.set_xlabel("Beta")
     ax_energy.set_ylabel("<E>")
 
@@ -176,12 +177,13 @@ def plot(
         color="orange",
         label="averaged",
     )
-    ax_magnet.set_title("Avg Magnetization")
     ax_magnet.set_xlabel("T")
     ax_magnet.set_ylabel("<M>")
 
     ax_energy.legend()
     ax_magnet.legend()
+
+    fig.suptitle(filename)
     plt.tight_layout()
     plt.show()
 
