@@ -57,11 +57,11 @@ def run(
         help="Number of repetitions for each beta",
     ),
     datapoints: int = typer.Option(
-        default=50,
+        default=70,
         help="Number of datapoints",
     ),
     beta: Tuple[float, float] = typer.Option(
-        default=(0.1, 0.6),
+        default=(0.01, 0.8),
         help="Beta range",
     ),
     interact: int = typer.Option(
@@ -140,7 +140,12 @@ def plot(
 ):
     data = list(pd.read_csv(filename).itertuples(index=False))
 
+    sim_params = Path(filename).stem.split("-")[1:]
+
     fig, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
+
+    fig.suptitle("Ising: " + ", ".join(sim_params))
+    fig.canvas.manager.set_window_title("plot-" + "-".join(sim_params))
 
     averaged_E = defaultdict(list)
     for beta, avg_E, _ in data:
@@ -183,7 +188,6 @@ def plot(
     ax_energy.legend()
     ax_magnet.legend()
 
-    fig.suptitle(filename)
     plt.tight_layout()
     plt.show()
 
