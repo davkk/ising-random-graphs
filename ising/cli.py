@@ -22,8 +22,13 @@ app = typer.Typer(
 )
 
 
-def save_datapoints(*, queue: queue.Queue, output_file: str):
-    with open(output_file, "a") as file:
+def save_datapoints(
+    *, queue: queue.Queue, output_temps: str, output_steps: str
+):
+    with (
+        open(output_temps, "a") as temperature_file,
+        open(output_steps, "a") as steps_file,
+    ):
         while True:
             try:
                 item = queue.get_nowait()
@@ -34,8 +39,16 @@ def save_datapoints(*, queue: queue.Queue, output_file: str):
                 continue
 
             beta, avg_E, avg_M = item
-            file.write(f"{beta:.5f},{avg_E:.5f},{avg_M:.5f}\n")
-            file.flush()
+            temperature_file.write(
+                f"{beta:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n"
+            )
+            temperature_file.flush()
+
+            for step in range(len(avg_E)):
+                steps_file.write(
+                    f"{step+1},{beta:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
+                )
+                steps_file.flush()
 
 
 @app.command()
@@ -65,7 +78,7 @@ def run(
         help="Beta range",
     ),
     interact: int = typer.Option(
-        default=3,
+        default=1,
         help="Range of interactions",
     ),
 ):
@@ -81,21 +94,24 @@ def run(
     for i in range(interact):
         layers[i] = np.linalg.matrix_power(edges, i + 1)
 
-    J_matrix = np.amax(layers, axis=0)
-
-    edges = J_matrix * edges
+    edges = np.amax(layers, axis=0)
+    print(edges)
 
     init_E = ising.calc_E(spins=spins, edges=edges)
     init_M = ising.calc_M(spins=spins)
 
     betas: npt.NDArray[Any] = np.linspace(*beta, datapoints)
 
-    filename = (
-        Path("data") / f"data-{n=}-{m=}-{steps=}-{repeat=}-{interact=}.csv"
-    )
+    sim_params = f"{n=}-{m=}-{steps=}-{repeat=}-{interact=}"
+    temps_filename = Path("data") / f"temps-{sim_params}.csv"
+    steps_filename = Path("data") / f"steps-{sim_params}.csv"
 
-    with open(filename, "w") as f:
-        f.write("beta,energy,magnet\n")
+    with (
+        open(temps_filename, "w") as temps_file,
+        open(steps_filename, "w") as steps_file,
+    ):
+        temps_file.write("beta,energy,magnet\n")
+        steps_file.write("step,beta,energy,magnet\n")
 
     write_queue = queue.Queue()
 
@@ -108,7 +124,8 @@ def run(
         writer.submit(
             save_datapoints,
             queue=write_queue,
-            output_file=filename,
+            output_temps=temps_filename,
+            output_steps=steps_filename,
         )
 
         print(f"Starting the simulation...")
@@ -135,7 +152,37 @@ def run(
 
 
 @app.command()
-def plot(
+def test():
+    graph: nx.Graph = nx.barabasi_albert_graph(n=256, m=3)
+
+    edges = nx.to_numpy_array(graph, dtype=int)
+    spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=256)
+
+    interact = 1
+
+    layers = np.empty((interact, edges.shape[0], edges.shape[1]))
+
+    for i in range(interact):
+        layers[i] = np.linalg.matrix_power(edges, i + 1)
+
+    edges = np.amax(layers, axis=0)
+
+    init_E = ising.calc_E(spins=spins, edges=edges)
+    init_M = ising.calc_M(spins=spins)
+
+    return ising.simulate(
+        steps=5,
+        beta=1.8,
+        spins=spins.copy(),
+        edges=edges,
+        init_E=init_E,
+        init_M=init_M,
+        num_repeat=0,
+    )
+
+
+@app.command()
+def plot_temps(
     filename: str = typer.Argument(Path, help="Path to data"),
 ):
     data = list(pd.read_csv(filename).itertuples(index=False))
@@ -145,7 +192,7 @@ def plot(
     fig, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
 
     fig.suptitle("Ising: " + ", ".join(sim_params))
-    fig.canvas.manager.set_window_title("plot-" + "-".join(sim_params))
+    fig.canvas.manager.set_window_title("plot-temps-" + "-".join(sim_params))
 
     averaged_E = defaultdict(list)
     for beta, avg_E, _ in data:
@@ -153,17 +200,17 @@ def plot(
     averaged_E = dict(sorted(averaged_E.items()))
 
     ax_energy.scatter(
-        [beta for beta, _, _ in data],
+        [1 / beta for beta, _, _ in data],
         [np.mean(avg_E) for _, avg_E, _ in data],
         s=1,
     )
     ax_energy.plot(
-        [beta for beta in averaged_E.keys()],
+        [1 / beta for beta in averaged_E.keys()],
         [np.mean(energies) for energies in averaged_E.values()],
         color="orange",
         label="averaged",
     )
-    ax_energy.set_xlabel("Beta")
+    ax_energy.set_xlabel("T")
     ax_energy.set_ylabel("<E>")
 
     averaged_M = defaultdict(list)
@@ -187,6 +234,40 @@ def plot(
 
     ax_energy.legend()
     ax_magnet.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+@app.command()
+def plot_steps(
+    filename: str = typer.Argument(Path, help="Path to data"),
+):
+    data = pd.read_csv(filename)
+    data = list(data.itertuples(index=False))
+
+    sim_params = Path(filename).stem.split("-")[1:]
+
+    fig, (ax_energy, ax_magnet) = plt.subplots(nrows=2, ncols=1)
+
+    fig.suptitle(", ".join(sim_params))
+    fig.canvas.manager.set_window_title("plot-steps-" + "-".join(sim_params))
+
+    ax_energy.scatter(
+        [step + 1 for step in range(len(data))],
+        [avg_E for _, _, avg_E, _ in data],
+        s=1,
+    )
+    ax_energy.set_xlabel("Step")
+    ax_energy.set_ylabel("<E>")
+
+    ax_magnet.scatter(
+        [step + 1 for step in range(len(data))],
+        [avg_M for _, _, _, avg_M in data],
+        s=1,
+    )
+    ax_magnet.set_xlabel("Step")
+    ax_magnet.set_ylabel("<M>")
 
     plt.tight_layout()
     plt.show()
