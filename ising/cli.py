@@ -61,7 +61,7 @@ def run(
         help="Number of datapoints",
     ),
     beta: Tuple[float, float] = typer.Option(
-        default=(0.01, 0.8),
+        default=(0.05, 0.8),
         help="Beta range",
     ),
     interact: int = typer.Option(
