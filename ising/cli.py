@@ -22,6 +22,147 @@ app = typer.Typer(
 )
 
 
+@app.command()
+def run(
+    steps: int = typer.Option(
+        default=1000,
+        help="Number of steps",
+        min=1,
+    ),
+    n: int = typer.Option(
+        default=64,
+        help="Number of nodes",
+        min=4,
+    ),
+    m: int = typer.Option(
+        default=2,
+        help="Barabasi m parameter",
+        min=1,
+    ),
+    repeat: int = typer.Option(
+        default=3,
+        help="Number of repetitions for each temp",
+        min=1,
+    ),
+    datapoints: int = typer.Option(
+        default=70,
+        help="Number of datapoints",
+        min=1,
+    ),
+    T_range: Tuple[float, float] = typer.Option(
+        default=(1.0, 150.0),
+        help="temp range",
+        min=0.001,
+    ),
+    interact: int = typer.Option(
+        default=1,
+        help="Range of interactions",
+        min=1,
+        max=8,
+    ),
+):
+    np.random.seed(2001)
+
+    graph: nx.Graph = nx.barabasi_albert_graph(n=n, m=m)
+    edges = nx.to_numpy_array(graph, dtype=float)
+    spins: npt.NDArray[Any] = np.random.choice([-1.0, 1.0], size=n)
+
+    if interact > 1:
+        layers = np.empty((interact + 1, edges.shape[0], edges.shape[1]))
+
+        layers[0] = np.zeros_like(edges)
+
+        for k in range(1, interact + 1):
+            layers[k] = np.linalg.matrix_power(edges, k)
+
+        edges = np.argmax(layers, axis=0).astype(float)
+        edges[edges == 0.0] = np.inf
+        edges = np.exp(-edges)
+
+    print(f"edges:\n{edges}")
+
+    init_E = ising.calc_E(spins=spins, edges=edges)
+    init_M = ising.calc_M(spins=spins)
+
+    temps: npt.NDArray[Any] = np.linspace(*T_range, datapoints)
+
+    sim_params = f"{n=}-{m=}-{steps=}-{repeat=}-{interact=}"
+    temps_filename = Path("data") / f"temps-{sim_params}.csv"
+    steps_filename = Path("data") / f"steps-{sim_params}.csv"
+
+    # TODO: use asyncio or ThreadPoolExecutor writing to a file
+    with (
+        open(temps_filename, "w") as temps_file,
+        open(steps_filename, "w") as steps_file,
+    ):
+        temps_file.write("temp,energy,magnet\n")
+        steps_file.write("step,temp,energy,magnet\n")
+
+        print(f"Starting the simulation...")
+        for temp in temps:
+            for num_repeat in range(repeat):
+                avg_E, avg_M = ising.simulate(
+                    steps=steps,
+                    temp=temp,
+                    spins=spins.copy(),
+                    edges=edges,
+                    init_E=init_E,
+                    init_M=init_M,
+                    num_repeat=num_repeat,
+                )
+
+                temps_file.write(
+                    f"{temp:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n"
+                )
+                temps_file.flush()
+
+                for step in range(len(avg_E)):
+                    steps_file.write(
+                        f"{step+1},{temp:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
+                    )
+                    steps_file.flush()
+
+
+@app.command()
+def test():
+    layers = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 1], [0, 0, 2]], dtype=float)
+    print(layers)
+    print(np.exp(-np.argmax(layers, axis=0)))
+
+    print(edges)
+
+
+@app.command()
+def run_once():
+    graph: nx.Graph = nx.barabasi_albert_graph(n=256, m=3)
+
+    edges = nx.to_numpy_array(graph, dtype=int)
+    spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=256)
+
+    interact = 1
+
+    layers = np.empty((interact, edges.shape[0], edges.shape[1]), dtype=int)
+
+    for k in range(interact):
+        layers[k] = np.linalg.matrix_power(edges, k + 1)
+
+    edges = np.exp(-np.argmax(layers, axis=0))
+    print(edges)
+
+    init_E = ising.calc_E(spins=spins, edges=edges)
+    init_M = ising.calc_M(spins=spins)
+
+    ising.simulate(
+        steps=1000,
+        temp=3.3,
+        spins=spins.copy(),
+        edges=edges,
+        init_E=init_E,
+        init_M=init_M,
+        num_repeat=0,
+    )
+
+
 def save_datapoints(
     *, queue: queue.Queue, output_temps: str, output_steps: str
 ):
@@ -38,21 +179,21 @@ def save_datapoints(
             except Empty:
                 continue
 
-            beta, avg_E, avg_M = item
+            temp, avg_E, avg_M = item
             temperature_file.write(
-                f"{beta:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n"
+                f"{temp:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n"
             )
             temperature_file.flush()
 
             for step in range(len(avg_E)):
                 steps_file.write(
-                    f"{step+1},{beta:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
+                    f"{step+1},{temp:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
                 )
                 steps_file.flush()
 
 
 @app.command()
-def run(
+def run_async(
     steps: int = typer.Option(
         default=1000,
         help="Number of steps",
@@ -67,40 +208,38 @@ def run(
     ),
     repeat: int = typer.Option(
         default=3,
-        help="Number of repetitions for each beta",
+        help="Number of repetitions for each temp",
     ),
     datapoints: int = typer.Option(
         default=70,
         help="Number of datapoints",
     ),
-    beta: Tuple[float, float] = typer.Option(
+    temp: Tuple[float, float] = typer.Option(
         default=(0.05, 0.8),
-        help="Beta range",
+        help="temp range",
     ),
     interact: int = typer.Option(
         default=1,
         help="Range of interactions",
     ),
 ):
-    np.random.seed(2001)
-
     graph: nx.Graph = nx.barabasi_albert_graph(n=n, m=m)
 
     edges = nx.to_numpy_array(graph, dtype=int)
     spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=n)
 
-    layers = np.empty((interact, edges.shape[0], edges.shape[1]))
+    layers = np.empty((interact, edges.shape[0], edges.shape[1]), dtype=int)
 
-    for i in range(interact):
-        layers[i] = np.linalg.matrix_power(edges, i + 1)
+    for k in range(interact):
+        layers[k] = np.linalg.matrix_power(edges, k + 1)
 
-    edges = np.amax(layers, axis=0)
+    edges = np.exp(-np.argmax(layers, axis=0))
     print(edges)
 
     init_E = ising.calc_E(spins=spins, edges=edges)
     init_M = ising.calc_M(spins=spins)
 
-    betas: npt.NDArray[Any] = np.linspace(*beta, datapoints)
+    temps: npt.NDArray[Any] = np.linspace(*temp, datapoints)
 
     sim_params = f"{n=}-{m=}-{steps=}-{repeat=}-{interact=}"
     temps_filename = Path("data") / f"temps-{sim_params}.csv"
@@ -110,8 +249,8 @@ def run(
         open(temps_filename, "w") as temps_file,
         open(steps_filename, "w") as steps_file,
     ):
-        temps_file.write("beta,energy,magnet\n")
-        steps_file.write("step,beta,energy,magnet\n")
+        temps_file.write("temp,energy,magnet\n")
+        steps_file.write("step,temp,energy,magnet\n")
 
     write_queue = queue.Queue()
 
@@ -133,14 +272,14 @@ def run(
             executor.submit(
                 ising.simulate,
                 steps=steps,
-                beta=beta,
+                temp=temp,
                 spins=spins.copy(),
                 edges=edges,
                 init_E=init_E,
                 init_M=init_M,
                 num_repeat=num_repeat,
             )
-            for beta in betas
+            for temp in temps
             for num_repeat in range(repeat)
         ]
 
@@ -149,36 +288,6 @@ def run(
             write_queue.put_nowait(result)
 
         write_queue.put(None)
-
-
-@app.command()
-def test():
-    graph: nx.Graph = nx.barabasi_albert_graph(n=256, m=3)
-
-    edges = nx.to_numpy_array(graph, dtype=int)
-    spins: npt.NDArray[Any] = np.random.choice([-1, 1], size=256)
-
-    interact = 1
-
-    layers = np.empty((interact, edges.shape[0], edges.shape[1]))
-
-    for i in range(interact):
-        layers[i] = np.linalg.matrix_power(edges, i + 1)
-
-    edges = np.amax(layers, axis=0)
-
-    init_E = ising.calc_E(spins=spins, edges=edges)
-    init_M = ising.calc_M(spins=spins)
-
-    return ising.simulate(
-        steps=5,
-        beta=1.8,
-        spins=spins.copy(),
-        edges=edges,
-        init_E=init_E,
-        init_M=init_M,
-        num_repeat=0,
-    )
 
 
 @app.command()
@@ -195,17 +304,17 @@ def plot_temps(
     fig.canvas.manager.set_window_title("plot-temps-" + "-".join(sim_params))
 
     averaged_E = defaultdict(list)
-    for beta, avg_E, _ in data:
-        averaged_E[beta].append(avg_E)
+    for temp, avg_E, _ in data:
+        averaged_E[temp].append(avg_E)
     averaged_E = dict(sorted(averaged_E.items()))
 
     ax_energy.scatter(
-        [1 / beta for beta, _, _ in data],
+        [temp for temp, _, _ in data],
         [np.mean(avg_E) for _, avg_E, _ in data],
         s=1,
     )
     ax_energy.plot(
-        [1 / beta for beta in averaged_E.keys()],
+        [temp for temp in averaged_E.keys()],
         [np.mean(energies) for energies in averaged_E.values()],
         color="orange",
         label="averaged",
@@ -214,17 +323,17 @@ def plot_temps(
     ax_energy.set_ylabel("<E>")
 
     averaged_M = defaultdict(list)
-    for beta, _, avg_M in data:
-        averaged_M[beta].append(avg_M)
+    for temp, _, avg_M in data:
+        averaged_M[temp].append(avg_M)
     averaged_M = dict(sorted(averaged_M.items()))
 
     ax_magnet.scatter(
-        [1 / beta for beta, _, _ in data],
+        [temp for temp, _, _ in data],
         [np.mean(avg_M) for _, _, avg_M in data],
         s=1,
     )
     ax_magnet.plot(
-        [1 / beta for beta in averaged_M.keys()],
+        [temp for temp in averaged_M.keys()],
         [np.mean(magents) for magents in averaged_M.values()],
         color="orange",
         label="averaged",
@@ -254,7 +363,7 @@ def plot_steps(
     fig.canvas.manager.set_window_title("plot-steps-" + "-".join(sim_params))
 
     ax_energy.scatter(
-        [step + 1 for step in range(len(data))],
+        [step for step, _, _, _ in data],
         [avg_E for _, _, avg_E, _ in data],
         s=1,
     )
@@ -262,7 +371,7 @@ def plot_steps(
     ax_energy.set_ylabel("<E>")
 
     ax_magnet.scatter(
-        [step + 1 for step in range(len(data))],
+        [step for step, _, _, _ in data],
         [avg_M for _, _, _, avg_M in data],
         s=1,
     )
