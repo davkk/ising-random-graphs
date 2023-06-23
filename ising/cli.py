@@ -106,8 +106,6 @@ def run(
                     temp=temp,
                     spins=spins.copy(),
                     edges=edges,
-                    init_E=init_E,
-                    init_M=init_M,
                     num_repeat=num_repeat,
                 )
 

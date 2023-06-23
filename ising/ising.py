@@ -22,8 +22,6 @@ def simulate(
     temp: float,
     spins: npt.NDArray[Any],
     edges: npt.NDArray[Any],
-    init_E: float,
-    init_M: float,
     num_repeat: int,
 ):
     print(num_repeat + 1, ":", temp)
@@ -33,22 +31,22 @@ def simulate(
     energies = np.empty(steps)
     magnets = np.empty(steps)
 
-    energy = init_E
-    magnet = init_M
+    energy = -np.sum(edges @ spins * spins) / 2.0
+    magnet = np.sum(spins)
 
     for step in range(0, steps):
         idx = np.random.randint(N)
 
-        spin_neighbors = np.sum(spins * edges[idx])
+        spins[idx] *= -1  # change spin value
+        new_energy = -np.sum(edges @ spins * spins) / 2.0
 
-        dE = 2.0 * spins[idx] * spin_neighbors
-        dM = -2.0 * spins[idx]
+        dE = new_energy - energy
 
         if dE < 0.0 or np.random.random() < min(np.exp(-dE / temp), 1.0):
-            spins[idx] *= -1
-
-            energy += dE
-            magnet += dM
+            energy = new_energy
+            magnet = np.sum(spins)
+        else:
+            spins[idx] *= -1  # restore prev spin value
 
         energies[step] = energy
         magnets[step] = magnet
