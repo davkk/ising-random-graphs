@@ -22,6 +22,39 @@ app = typer.Typer(
 )
 
 
+def save_datapoints(
+    *,
+    queue: queue.Queue,
+    output_temps: str,
+    output_steps: str,
+):
+    with (
+        open(output_temps, "a") as temperature_file,
+        open(output_steps, "a") as steps_file,
+    ):
+        while True:
+            try:
+                item = queue.get_nowait()
+                if item is None:
+                    break
+
+            except Empty:
+                continue
+
+            temp, avg_E, avg_M = item
+
+            temperature_file.write(
+                f"{temp:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n"
+            )
+            temperature_file.flush()
+
+            for step in range(len(avg_E)):
+                steps_file.write(
+                    f"{step+1},{temp:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
+                )
+                steps_file.flush()
+
+
 @app.command()
 def run(
     steps: int = typer.Option(
@@ -87,7 +120,8 @@ def run(
     temps_filename = Path("data") / f"temps-{sim_params}.csv"
     steps_filename = Path("data") / f"steps-{sim_params}.csv"
 
-    # TODO: use asyncio or ThreadPoolExecutor writing to a file
+    write_queue = queue.Queue()
+
     with (
         open(temps_filename, "w") as temps_file,
         open(steps_filename, "w") as steps_file,
@@ -95,51 +129,25 @@ def run(
         temps_file.write("temp,energy,magnet\n")
         steps_file.write("step,temp,energy,magnet\n")
 
+    with concurrent.futures.ThreadPoolExecutor(1) as writer:
+        writer.submit(
+            save_datapoints,
+            queue=write_queue,
+            output_temps=temps_filename,
+            output_steps=steps_filename,
+        )
+
         print(f"Starting the simulation...")
-        for temp, avg_E, avg_M in ising.simulate(
+        for result in ising.simulate(
             steps=steps,
             init_spins=spins,
             edges=edges,
             temps=temps,
             repeat=repeat,
         ):
-            temps_file.write(f"{temp:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n")
-            temps_file.flush()
+            write_queue.put_nowait(result)
 
-            for step in range(len(avg_E)):
-                steps_file.write(
-                    f"{step+1},{temp:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
-                )
-                steps_file.flush()
-
-
-def save_datapoints(
-    *, queue: queue.Queue, output_temps: str, output_steps: str
-):
-    with (
-        open(output_temps, "a") as temperature_file,
-        open(output_steps, "a") as steps_file,
-    ):
-        while True:
-            try:
-                item = queue.get_nowait()
-                if item is None:
-                    break
-
-            except Empty:
-                continue
-
-            temp, avg_E, avg_M = item
-            temperature_file.write(
-                f"{temp:.5f},{avg_E[-1]:.5f},{avg_M[-1]:.5f}\n"
-            )
-            temperature_file.flush()
-
-            for step in range(len(avg_E)):
-                steps_file.write(
-                    f"{step+1},{temp:.5f},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
-                )
-                steps_file.flush()
+        write_queue.put(None)
 
 
 @app.command()
