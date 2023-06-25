@@ -26,13 +26,10 @@ def simulate(
 
             spins = init_spins.copy()
 
-            energies: npt.NDArray[Any] = np.empty(steps)
-            magnets: npt.NDArray[Any] = np.empty(steps)
-
             energy = init_energy
             magnet = init_magnet
 
-            for step in range(0, steps):
+            for step in range(steps):
                 idx = np.random.randint(N)
 
                 spins[idx] *= -1  # change spin value
@@ -49,7 +46,4 @@ def simulate(
                 else:
                     spins[idx] *= -1  # restore prev spin value, reject change
 
-                energies[step] = energy
-                magnets[step] = magnet
-
-            yield temp, energies / N, magnets / N
+                yield temp, step, energy, magnet
