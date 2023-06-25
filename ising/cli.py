@@ -63,32 +63,32 @@ def run(
         min=1,
     ),
     n: int = typer.Option(
-        default=64,
+        default=128,
         help="Number of nodes",
         min=4,
     ),
     m: int = typer.Option(
-        default=2,
+        default=3,
         help="Barabasi m parameter",
         min=1,
     ),
     repeat: int = typer.Option(
-        default=3,
+        default=5,
         help="Number of repetitions for each temp",
         min=1,
     ),
     datapoints: int = typer.Option(
-        default=70,
+        default=100,
         help="Number of datapoints",
         min=1,
     ),
     temp_range: Tuple[float, float] = typer.Option(
-        default=(1.0, 150.0),
+        default=(1.0, 100.0),
         help="temp range",
         min=0.001,
     ),
     k: int = typer.Option(
-        default=1,
+        default=3,
         help="Range of interactions",
         min=1,
         max=8,
@@ -101,16 +101,15 @@ def run(
     spins: npt.NDArray[Any] = np.random.choice([-1.0, 1.0], size=n)
 
     if k > 1:
-        layers = np.empty((k + 1, edges.shape[0], edges.shape[1]))
+        layers = np.empty((k, *edges.shape))
 
-        layers[0] = np.zeros_like(edges)
+        for ki in range(k):
+            layers[ki] = np.linalg.matrix_power(edges, ki + 1)
 
-        for ki in range(1, k + 1):
-            layers[ki] = np.linalg.matrix_power(edges, ki)
+        edges = np.argmax(layers, axis=0)
 
-        edges = np.argmax(layers, axis=0).astype(float)
-        edges[edges == 0.0] = np.inf
         edges = np.exp(-edges)
+        edges[np.sum(layers, axis=0) == 0] = 0
 
     print(f"edges:\n{edges}")
 
@@ -148,6 +147,13 @@ def run(
             write_queue.put_nowait(result)
 
         write_queue.put(None)
+
+
+@app.command()
+def plot_graph():
+    graph: nx.Graph = nx.barabasi_albert_graph(n=64, m=4)
+    nx.draw(graph)
+    plt.show()
 
 
 @app.command()

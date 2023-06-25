@@ -17,17 +17,20 @@ def simulate(
 ):
     N = init_spins.shape[0]
 
+    init_energy: float = -np.sum(edges @ init_spins * init_spins) / 2.0
+    init_magnet: float = np.sum(init_spins)
+
     for temp in temps:
         for num_repeat in range(repeat):
             print(num_repeat + 1, ":", temp)
 
             spins = init_spins.copy()
 
-            energies = np.empty(steps)
-            magnets = np.empty(steps)
+            energies: npt.NDArray[Any] = np.empty(steps)
+            magnets: npt.NDArray[Any] = np.empty(steps)
 
-            energy = -np.sum(edges @ spins * spins) / 2.0
-            magnet = np.sum(spins)
+            energy = init_energy
+            magnet = init_magnet
 
             for step in range(0, steps):
                 idx = np.random.randint(N)
@@ -44,7 +47,7 @@ def simulate(
                     energy += dE
                     magnet += dM
                 else:
-                    spins[idx] *= -1  # restore prev spin value
+                    spins[idx] *= -1  # restore prev spin value, reject change
 
                 energies[step] = energy
                 magnets[step] = magnet
