@@ -2,7 +2,7 @@ import concurrent.futures
 import os
 import queue
 import sys
-from collections import defaultdict
+import time
 from pathlib import Path
 from queue import Empty
 from typing import Any, Tuple
@@ -20,26 +20,6 @@ app = typer.Typer(
     add_completion=False,
     help="CLI for running Ising simulations on Barabasi-Albert networks",
 )
-
-
-def save_datapoints(*, queue: queue.Queue, path: str):
-    with open(path, "a") as file:
-        while True:
-            try:
-                item = queue.get_nowait()
-                if item is None:
-                    break
-
-            except Empty:
-                continue
-
-            temp, avg_E, avg_M = item
-
-            for step in range(len(avg_E)):
-                file.write(
-                    f"{temp:.5f},{step+1},{avg_E[step]:.5f},{avg_M[step]:.5f}\n"
-                )
-                file.flush()
 
 
 @app.command()
@@ -70,7 +50,7 @@ def run(
         min=1,
     ),
     temp_range: Tuple[float, float] = typer.Option(
-        default=(1.0, 100.0),
+        default=(0.4, 40.0),
         help="temp range",
         min=0.001,
     ),
@@ -104,30 +84,22 @@ def run(
     sim_params = f"{n=}-{m=}-{steps=}-{repeat=}-{k=}"
     output_path = Path("data") / f"data-{sim_params}.csv"
 
-    write_queue = queue.Queue()
-
-    with open(output_path, "w") as output_file:
-        output_file.write("temp,step,energy,magnet\n")
-
-    with concurrent.futures.ThreadPoolExecutor(1) as writer:
-        writer.submit(
-            save_datapoints,
-            queue=write_queue,
-            path=output_path,
-        )
+    with open(output_path, "w") as file:
+        file.write("temp,step,energy,magnet\n")
 
         print(f"Starting the simulation...")
 
-        for result in ising.simulate(
+        for temp, step, avg_E, avg_M in ising.simulate(
             steps=steps,
             init_spins=spins,
             edges=edges,
             temps=temps,
             repeat=repeat,
         ):
-            write_queue.put_nowait(result)
+            file.write(f"{temp:.5f},{step+1},{avg_E:.5f},{avg_M:.5f}\n")
 
-        write_queue.put(None)
+            if step % 100 == 0:
+                file.flush()
 
 
 @app.command()
@@ -202,7 +174,10 @@ def plot_temps(
 def plot_steps(
     filename: str = typer.Argument(Path, help="Path to data"),
 ):
-    data = pd.read_csv(filename)
+    data = pd.read_csv(filename).groupby("step", as_index=False)
+
+    data_max = data.max()
+    data_min = data.min()
 
     sim_params = Path(filename).stem.split("-")[1:]
 
@@ -211,20 +186,38 @@ def plot_steps(
     fig.suptitle(", ".join(sim_params))
     fig.canvas.manager.set_window_title("plot-steps-" + "-".join(sim_params))
 
-    data.plot.scatter(
+    data_max.plot.scatter(
         ax=ax_energy,
         x="step",
         y="energy",
         s=1,
+        label=f"$T_\max={data_max.temp[0]}$",
+        color="orange",
+    )
+    data_min.plot.scatter(
+        ax=ax_energy,
+        x="step",
+        y="energy",
+        s=1,
+        label=f"$T_\min={data_min.temp[0]}$",
     )
     ax_energy.set_xlabel("Step")
     ax_energy.set_ylabel("<E>")
 
-    data.plot.scatter(
+    data_max.plot.scatter(
         ax=ax_magnet,
         x="step",
         y="magnet",
         s=1,
+        label=f"$T_\max={data_max.temp[0]}$",
+        color="orange",
+    )
+    data_min.plot.scatter(
+        ax=ax_magnet,
+        x="step",
+        y="magnet",
+        s=1,
+        label=f"$T_\min={data_min.temp[0]}$",
     )
     ax_magnet.set_xlabel("Step")
     ax_magnet.set_ylabel("<M>")
