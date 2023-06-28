@@ -73,9 +73,8 @@ def run(
         for ki in range(k):
             layers[ki] = np.linalg.matrix_power(edges, ki + 1)
 
-        edges = np.argmax(layers, axis=0)
-        edges = np.exp(-edges)
-        edges[np.sum(layers, axis=0) == 0] = 0
+        edges = (layers != 0).argmax(axis=0)
+        edges = np.where(edges != 0, np.exp(-edges), 0)
 
     print(f"edges:\n{edges}")
 
