@@ -1,10 +1,4 @@
-import concurrent.futures
-import os
-import queue
-import sys
-import time
 from pathlib import Path
-from queue import Empty
 from typing import Any, Tuple
 
 import matplotlib.pyplot as plt
