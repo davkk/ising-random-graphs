@@ -1,15 +1,16 @@
-import sys
-
 import numpy as np
-from numba import jit
+from numba import float32, njit
+from numba.pycc import CC
 
+cc = CC("ising")
 np.random.seed(2001)
 
 
-@jit(nopython=True, fastmath=True, cache=True)
-def simulate(*, temp, steps, edges):
+@njit()
+@cc.export("simulate", "Array(f4, 2, 'C'), i8, f4")
+def simulate(edges, steps, temp):
     n = edges.shape[0]
-    spins = np.random.choice(np.array([-1.0, 1.0]), size=n)
+    spins = np.random.choice(np.array([-1.0, 1.0], dtype=float32), size=n)
 
     energy = -0.5 * np.sum(np.dot(edges, spins) * spins)
     magnet = np.sum(spins)
@@ -32,8 +33,5 @@ def simulate(*, temp, steps, edges):
         print(temp, step, energy, magnet)
 
 
-simulate(
-    edges=np.load(sys.argv[1]),
-    steps=int(sys.argv[2]),
-    temp=float(sys.argv[3]),
-)
+if __name__ == "__main__":
+    cc.compile()
