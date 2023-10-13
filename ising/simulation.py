@@ -10,6 +10,7 @@ np.random.seed(2001)
 @cc.export("simulate", "Array(f4, 2, 'C'), i8, f4")
 def simulate(edges, steps, temp):
     n = edges.shape[0]
+    print(n)
     spins = np.random.choice(np.array([-1.0, 1.0], dtype=float32), size=n)
 
     energy = -0.5 * np.sum(np.dot(edges, spins) * spins)
@@ -30,8 +31,12 @@ def simulate(edges, steps, temp):
         else:
             spins[idx] *= -1.0  # restore prev spin value, reject change
 
-        print(temp, step, energy, magnet)
+        print(temp, step, energy / n, magnet / n)
+
+
+def main():
+    cc.compile()
 
 
 if __name__ == "__main__":
-    cc.compile()
+    main()

@@ -1,7 +1,6 @@
 import argparse
 
 import numpy as np
-import numpy.typing as npt
 from networkx import barabasi_albert_graph, to_numpy_array
 from numba import jit
 
@@ -33,7 +32,7 @@ def main():
     parser.add_argument(
         "-n",
         metavar="int",
-        type=np.uint8,
+        type=np.uint16,
         required=True,
         help="number of nodes",
     )
@@ -68,4 +67,5 @@ def main():
     )
 
 
-main()
+if __name__ == "__main__":
+    main()
