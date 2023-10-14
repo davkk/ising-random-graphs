@@ -7,22 +7,22 @@ from numba import jit
 np.random.seed(2001)
 
 
-@jit(nopython=True, fastmath=True, cache=True, parallel=True)
-def generate(*, graph: np.ndarray, k: np.uint8):
-    graph = graph.astype(np.float32)
+# @jit(nopython=True, fastmath=True, cache=True, parallel=True)
+def generate(*, edges: np.ndarray, r: np.uint8):
+    edges = edges.astype(np.float32)
+    n = edges.shape[0]
 
-    if k > 1:
-        layers = np.empty((k, graph.shape[0], graph.shape[1]), dtype=np.float32)
+    if r > 1:
+        layers = np.empty((r, n, n), dtype=np.float32)
 
-        for ki in range(k):
-            layers[ki] = np.linalg.matrix_power(graph, ki + 1)
+        for k in range(r):
+            layers[k] = np.linalg.matrix_power(edges, k + 1)
+            layers[k] = (layers[k] > 0.0) * (k + 1)
 
-        graph = (layers != 0).argmax(0)
-        graph = np.where(
-            graph != 0, np.exp(-graph).astype(np.float32), 0
-        ).astype(np.float32)
+        layers = np.argmax(layers, 0) + 1.0
+        edges = np.exp(-layers).astype(np.float32)
 
-    return graph
+    return edges
 
 
 def main():
@@ -53,13 +53,15 @@ def main():
     n, m, k = parser.parse_args().__dict__.values()
 
     edges = generate(
-        graph=to_numpy_array(
+        edges=to_numpy_array(
             barabasi_albert_graph(n=n, m=m),
             dtype=np.float32,
             order="C",
         ),
-        k=k,
+        r=k,
     )
+
+    print(edges)
 
     np.save(
         f"barabasi_{n=}_{m=}_{k=}",
