@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.scripts]
 compile = "ising.simulation:main"
 ising = "ising.run:main"
-graph = "ising.graph:main"
+gengraph = "ising.graph:main"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
