@@ -1,17 +1,17 @@
 import numpy as np
-from numba import float32, njit
+from numba import njit
 from numba.pycc import CC
 
 cc = CC("ising")
-np.random.seed(2001)
 
 
 @njit()
-@cc.export("simulate", "Array(f4, 2, 'C'), i8, f4")
+@cc.export("simulate", "Array(f8, 2, 'C'), i8, f8")
 def simulate(edges, steps, temp):
+    np.random.seed(2001)
+
     n = edges.shape[0]
-    print(n)
-    spins = np.random.choice(np.array([-1.0, 1.0], dtype=float32), size=n)
+    spins = np.random.choice(np.array([-1.0, 1.0]), size=n)
 
     energy = -0.5 * np.sum(np.dot(edges, spins) * spins)
     magnet = np.sum(spins)
@@ -19,7 +19,7 @@ def simulate(edges, steps, temp):
     for step in np.arange(1, steps + 1):
         idx = np.random.randint(n)
 
-        spins[idx] *= -1.0  # change spin value
+        spins[idx] *= -1.0  # flip random spin
         new_energy = -0.5 * np.sum(np.dot(edges, spins) * spins)
 
         dE = new_energy - energy
@@ -29,7 +29,7 @@ def simulate(edges, steps, temp):
             energy += dE
             magnet += dM
         else:
-            spins[idx] *= -1.0  # restore prev spin value, reject change
+            spins[idx] *= -1.0  # restore spin value => reject the change
 
         print(temp, step, energy / n, magnet / n)
 

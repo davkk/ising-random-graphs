@@ -9,7 +9,7 @@ def main():
     ising.simulate(
         np.load(sys.argv[1]),
         np.uint32(sys.argv[2]),
-        np.float32(sys.argv[3]),
+        np.float64(sys.argv[3]),
     )
 
 
