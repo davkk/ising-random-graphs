@@ -5,7 +5,7 @@ from numba.pycc import CC
 cc = CC("ising")
 
 
-@njit(parallel=True, fastmath=True)
+@njit(parallel=True, fastmath=True, cache=True)
 @cc.export("simulate", "Array(f8, 2, 'C'), i8, f8")
 def simulate(graph, steps, temp):
     n = graph.shape[0]
