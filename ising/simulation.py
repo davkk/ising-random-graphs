@@ -5,31 +5,29 @@ from numba.pycc import CC
 cc = CC("ising")
 
 
-@njit()
+@njit(parallel=True, fastmath=True)
 @cc.export("simulate", "Array(f8, 2, 'C'), i8, f8")
-def simulate(edges, steps, temp):
-    np.random.seed(2001)
-
-    n = edges.shape[0]
+def simulate(graph, steps, temp):
+    n = graph.shape[0]
     spins = np.random.choice(np.array([-1.0, 1.0]), size=n)
 
-    energy = -0.5 * np.sum(np.dot(edges, spins) * spins)
+    energy = -0.5 * np.sum(np.dot(graph, spins) * spins)
     magnet = np.sum(spins)
 
     for step in np.arange(1, steps + 1):
         idx = np.random.randint(n)
 
-        spins[idx] *= -1.0  # flip random spin
-        new_energy = -0.5 * np.sum(np.dot(edges, spins) * spins)
+        spin = spins[idx]
+        edges = graph[idx]
+        neighbors = np.dot(edges, spins) - edges[idx] * spin
 
-        dE = new_energy - energy
-        dM = -2.0 * spins[idx]
+        dE = 2.0 * neighbors * spin
+        dM = -2.0 * spin
 
         if dE < 0.0 or np.random.random() < np.exp(-dE / temp):
+            spins[idx] *= -1.0
             energy += dE
             magnet += dM
-        else:
-            spins[idx] *= -1.0  # restore spin value => reject the change
 
         print(temp, step, energy / n, magnet / n)
 
