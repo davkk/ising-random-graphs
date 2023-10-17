@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 if [[ $# -lt 2 ]]; then
     echo "You need to pass arguments"
@@ -17,7 +17,7 @@ compile
 
 echo "[*] generating data..."
 parallel -j10 --lb --delay 0.1 --progress \
-    --results data/ising_$steps\_{1/.}_$now/{2}/{3} \
+    --results data/raw/ising_${steps}_{1/.}_${now}/{2}/{3} \
     ising {1} $steps {2} \
     ::: $graph \
     ::: $temps \
@@ -25,5 +25,4 @@ parallel -j10 --lb --delay 0.1 --progress \
 
 echo "[*] cleaning up..."
 datadir=`find . -name "*$now" -type d`
-
-find $datadir -type f | grep -E "*.seq|*.err" | xargs -I{} rm {}
+find $datadir -type f | grep -E ".seq|.err" | xargs -I{} rm {}
