@@ -13,7 +13,7 @@ temps=`seq 0.2 0.2 30.0`
 repeats=`seq 1 10`
 
 echo "[*] compiling..."
-# compile
+compile
 
 echo "[*] generating data..."
 parallel -j10 --lb --delay 0.1 --progress \
