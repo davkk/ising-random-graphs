@@ -5,7 +5,7 @@ import networkx as nx
 import numpy as np
 
 
-def short_path(*, graph: nx.Graph):
+def shortpath(*, graph: nx.Graph):
     n = graph.number_of_nodes()
     edges = np.empty((n, n), dtype=np.float64, order="C")
 
@@ -17,14 +17,13 @@ def short_path(*, graph: nx.Graph):
 
         edges[node, node] = 0
 
-    return edges
+    return edges / np.max(edges)
 
 
-def mat_power(*, graph: np.ndarray, r: np.uint8):
-    if r == 1:
-        return graph
+def matpower(*, graph: nx.Graph, r: np.uint8):
+    n = graph.number_of_nodes()
 
-    n = graph.shape[0]
+    graph = nx.to_numpy_array(graph, dtype=np.float64, order="C")
     layers = np.empty((r, n, n))
 
     for k in range(r):
@@ -32,9 +31,8 @@ def mat_power(*, graph: np.ndarray, r: np.uint8):
         layers[k] *= np.exp(-(k + 1))
 
     layers = np.sum(layers, axis=0)
-    layers = layers / np.max(layers)
 
-    return layers
+    return layers / np.max(layers)
 
 
 class Method(Enum):
@@ -63,7 +61,7 @@ def main():
         type=str,
         choices=Method._member_names_,
         help="method of generating the graph",
-        default=Method.shortpath,
+        required=True,
     )
     parser.add_argument(
         "-n",
@@ -86,6 +84,9 @@ def main():
     )
     graph_type, method, n, p, m = parser.parse_args().__dict__.values()
 
+    if p and p > 1:
+        parser.error("p cannot be greater than 1")
+
     graph, edges, r, filename_params = None, None, None, None
 
     np.random.seed(2001)
@@ -96,7 +97,7 @@ def main():
                 parser.error("The -p flag is required Erdos-Renyi graph")
 
             graph = nx.erdos_renyi_graph(n=n, p=p)
-            r = np.ceil(np.emath.logn((n - 1) * p, n))
+            r = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
             filename_params = f"p={int(p * 100)}"
 
         case Graph.BA.value:
@@ -104,22 +105,15 @@ def main():
                 parser.error("The -m flag is required Barabasi-Albert graph")
 
             graph = nx.barabasi_albert_graph(n=n, m=m)
-            r = np.ceil(np.emath.logn(2 * m, n))
+            r = np.uint8(np.ceil(np.emath.logn(2 * m, n)))
             filename_params = f"{m=}"
 
     match method:
         case Method.matpower.value:
-            edges = mat_power(
-                graph=nx.to_numpy_array(
-                    graph,
-                    dtype=np.float64,
-                    order="C",
-                ),
-                r=r,
-            )
+            edges = matpower(graph=graph, r=r)
 
         case Method.shortpath.value:
-            edges = short_path(graph=graph)
+            edges = shortpath(graph=graph)
 
     print(f"{edges=}")
 
