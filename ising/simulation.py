@@ -14,7 +14,7 @@ def simulate(graph, steps, temp):
     energy = -0.5 * np.sum(np.dot(graph, spins) * spins)
     magnet = np.sum(spins)
 
-    for step in np.arange(1, steps + 1):
+    for step in range(1, steps * n + 1):
         idx = np.random.randint(n)
 
         spin = spins[idx]
@@ -29,7 +29,8 @@ def simulate(graph, steps, temp):
             energy += dE
             magnet += dM
 
-        print(temp, step, energy / n, magnet / n)
+        if step % n == 0:
+            print(temp, step // n, energy / n, magnet / n)
 
 
 def main():
