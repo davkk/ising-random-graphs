@@ -7,28 +7,27 @@ import numpy as np
 
 def shortpath(*, graph: nx.Graph):
     n = graph.number_of_nodes()
-    edges = np.empty((n, n), dtype=np.float64, order="C")
+    edges = np.zeros((n, n), dtype=np.float64, order="C")
 
     for node in graph.nodes():
         layers = enumerate(nx.bfs_layers(graph, node))
+        next(layers)
 
         for length, conn in layers:
-            edges[node, conn] = np.exp(-length)
+            edges[node, conn] = np.exp(-length + 1)
 
-        edges[node, node] = 0
-
-    return edges / np.max(edges)
+    return edges
 
 
 def matpower(*, graph: nx.Graph, r: np.uint8):
     n = graph.number_of_nodes()
 
     graph = nx.to_numpy_array(graph, dtype=np.float64, order="C")
-    layers = np.empty((r, n, n))
+    layers = np.zeros((r, n, n))
 
     for k in range(r):
         layers[k] = np.linalg.matrix_power(graph, k + 1)
-        layers[k] *= np.exp(-(k + 1))
+        layers[k] *= np.exp(-k + 1)
 
     layers = np.sum(layers, axis=0)
 
@@ -94,15 +93,17 @@ def main():
     match graph_type:
         case Graph.ER.value:
             if not p:
-                parser.error("The -p flag is required Erdos-Renyi graph")
+                parser.error("The -p flag is required for Erdos-Renyi graph")
 
             graph = nx.erdos_renyi_graph(n=n, p=p)
             r = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
-            filename_params = f"p={int(p * 100)}"
+            filename_params = f"{p=}"
 
         case Graph.BA.value:
             if not m:
-                parser.error("The -m flag is required Barabasi-Albert graph")
+                parser.error(
+                    "The -m flag is required for Barabasi-Albert graph"
+                )
 
             graph = nx.barabasi_albert_graph(n=n, m=m)
             r = np.uint8(np.ceil(np.emath.logn(2 * m, n)))
@@ -118,7 +119,7 @@ def main():
     print(f"{edges=}")
 
     np.save(
-        f"data/graphs/{graph_type}_{method}_{n=}_" + filename_params,
+        f"data/graphs/{graph_type}_{n=}_{filename_params}_{method}",
         edges,
     )
 
