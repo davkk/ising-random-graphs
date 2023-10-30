@@ -2,10 +2,13 @@ import argparse
 from enum import Enum
 
 import networkx as nx
+import numba as nb
 import numpy as np
 
+# from . import ising
 
-def shortpath(*, graph: nx.Graph):
+
+def shortpath(graph: nx.Graph):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -19,10 +22,9 @@ def shortpath(*, graph: nx.Graph):
     return edges
 
 
-def matpower(*, graph: nx.Graph, r: np.uint8):
-    n = graph.number_of_nodes()
-
-    graph = nx.to_numpy_array(graph, dtype=np.float64, order="C")
+@nb.njit(parallel=True, cache=True, fastmath=True)
+def matpower(*, graph: np.ndarray, r: np.uint8):
+    n = graph.shape[0]
     layers = np.zeros((r, n, n))
 
     for k in range(r):
@@ -39,21 +41,9 @@ class Method(Enum):
     matpower = "matpower"
 
 
-class Graph(Enum):
-    ER = "ER"
-    BA = "BA"
-
-
-# %%
 def main():
     parser = argparse.ArgumentParser(
         description="Tool to generate a random graph"
-    )
-    parser.add_argument(
-        "graph",
-        type=str,
-        choices=Graph._member_names_,
-        help="graph type",
     )
     parser.add_argument(
         "--method",
@@ -73,55 +63,33 @@ def main():
         "-p",
         metavar="int",
         type=np.float64,
+        required=True,
         help="probability for edge creation",
     )
-    parser.add_argument(
-        "-m",
-        metavar="int",
-        type=np.uint8,
-        help="number of edges to attach",
-    )
-    graph_type, method, n, p, m = parser.parse_args().__dict__.values()
+    method, n, p = parser.parse_args().__dict__.values()
 
-    if p and p > 1:
-        parser.error("p cannot be greater than 1")
+    if p and (p > 1 or p <= 0):
+        parser.error("0 < p <= 1")
 
-    graph, edges, r, filename_params = None, None, None, None
-
-    np.random.seed(2001)
-
-    match graph_type:
-        case Graph.ER.value:
-            if not p:
-                parser.error("The -p flag is required for Erdos-Renyi graph")
-
-            graph = nx.erdos_renyi_graph(n=n, p=p)
-            r = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
-            filename_params = f"{p=}"
-
-        case Graph.BA.value:
-            if not m:
-                parser.error(
-                    "The -m flag is required for Barabasi-Albert graph"
-                )
-
-            graph = nx.barabasi_albert_graph(n=n, m=m)
-            r = np.uint8(np.ceil(np.emath.logn(2 * m, n)))
-            filename_params = f"{m=}"
+    graph = nx.erdos_renyi_graph(n=n, p=p)
+    J = None
 
     match method:
         case Method.matpower.value:
-            edges = matpower(graph=graph, r=r)
+            r_max = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
+            J = matpower(
+                graph=nx.to_numpy_array(graph, order="C"),
+                r=r_max,
+            )
 
         case Method.shortpath.value:
-            edges = shortpath(graph=graph)
+            # J = ising.shortpath(
+            #     nx.to_numpy_array(graph, dtype=np.uint8, order="C")
+            # )
+            J = shortpath(graph)
 
-    print(f"{edges=}")
-
-    np.save(
-        f"data/graphs/{graph_type}_{n=}_{filename_params}_{method}",
-        edges,
-    )
+    print(J)
+    np.save(f"data/graphs/ER_{n=}_{p=}_{method}", J)
 
 
 if __name__ == "__main__":
