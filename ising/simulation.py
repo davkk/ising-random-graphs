@@ -1,7 +1,6 @@
 import numba as nb
 import numpy as np
 from numba.pycc import CC
-from numba.typed import List
 
 cc = CC("ising")
 

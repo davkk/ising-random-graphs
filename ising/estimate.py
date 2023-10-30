@@ -1,22 +1,36 @@
+import sys
+
 import numpy as np
 
-N = 10000
-p = 0.004
-k = N * p
-r_max = int(np.ceil(np.emath.logn(k, N)))
-alpha = 1
 
-T_c = 0
-used = 0
+def estimate_critical_temperature(*, n, p):
+    k = n * p
+    # r_max = int(np.ceil(np.emath.logn(k, n)))
+    alpha = 1
 
-for r in range(1, r_max + 1):
-    exp = np.exp(-alpha * (r - 1))
-    con = k * np.power(k - 1, r - 1)
+    T_c = 0
+    used = 0
+    r = 1
 
-    T_c += min(N - used, con) * exp
-    used += con
+    while used < n:
+        con = min(n - used, k * np.power(k - 1, r - 1))
 
-    if used > N:
-        break
+        used += con
+        T_c += con * np.exp(-alpha * (r - 1))
 
-print(T_c)
+        r += 1
+
+    return T_c
+
+
+def main():
+    print(
+        estimate_critical_temperature(
+            n=int(sys.argv[1]),
+            p=float(sys.argv[2]),
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

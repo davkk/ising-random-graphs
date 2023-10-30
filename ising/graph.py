@@ -5,7 +5,7 @@ import networkx as nx
 import numba as nb
 import numpy as np
 
-# from . import ising
+from . import estimate
 
 
 def shortpath(graph: nx.Graph):
@@ -23,11 +23,11 @@ def shortpath(graph: nx.Graph):
 
 
 @nb.njit(parallel=True, cache=True, fastmath=True)
-def matpower(*, graph: np.ndarray, r: np.uint8):
+def matpower(*, graph: np.ndarray, r_max: np.uint8):
     n = graph.shape[0]
-    layers = np.zeros((r, n, n))
+    layers = np.zeros((r_max, n, n))
 
-    for k in range(r):
+    for k in range(r_max):
         layers[k] = np.linalg.matrix_power(graph, k + 1)
         layers[k] *= np.exp(-k + 1)
 
@@ -72,23 +72,22 @@ def main():
         parser.error("0 < p <= 1")
 
     graph = nx.erdos_renyi_graph(n=n, p=p)
-    J = None
+    J, T_c = None, None
 
     match method:
         case Method.matpower.value:
-            r_max = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
             J = matpower(
                 graph=nx.to_numpy_array(graph, order="C"),
-                r=r_max,
+                r_max=np.uint8(np.ceil(np.emath.logn((n - 1) * p, n))),
             )
 
         case Method.shortpath.value:
-            # J = ising.shortpath(
-            #     nx.to_numpy_array(graph, dtype=np.uint8, order="C")
-            # )
             J = shortpath(graph)
+            T_c = estimate.estimate_critical_temperature(n=n, p=p)
 
-    print(J)
+    print(f"{J=}")
+    print(f"estimated {T_c=}")
+
     np.save(f"data/graphs/ER_{n=}_{p=}_{method}", J)
 
 

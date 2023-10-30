@@ -9,7 +9,7 @@ readme = "README.md"
 compile = "ising.simulation:main"
 ising = "ising.run:main"
 gengraph = "ising.graph:main"
-average = "ising.average:main"
+estimate = "ising.estimate:main"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
