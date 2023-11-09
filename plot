@@ -5,7 +5,7 @@ temps_avg = ARG1."/temps_avg"
 
 # Set the output format and file name
 set terminal svg enhanced size 800,1000 font "serif,14"
-set out "ising_energy_magnet.svg"
+set out ARG1."/ising_energy_magnet.svg"
 
 # Set overall plot title
 set title "Ising Model Results"

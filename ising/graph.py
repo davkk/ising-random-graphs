@@ -85,8 +85,7 @@ def main():
             J = shortpath(graph)
             T_c = estimate.estimate_critical_temperature(n=n, p=p)
 
-    print(f"{J=}")
-    print(f"estimated {T_c=}")
+    print(n, p, T_c)
 
     np.save(f"data/graphs/ER_{n=}_{p=}_{method}", J)
 

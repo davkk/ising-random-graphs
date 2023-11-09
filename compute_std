@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+if [[ $# -lt 2 ]]; then
+    echo "You need to pass arguments"
+    exit 0
+fi
+
+path=$1
+skip=$2
+
+dirname=`basename $path`
+output_dir=data/processed/$dirname
+
+mkdir -p $output_dir
+
+find $path -type f \
+    | xargs -I{} awk "
+        \$2 > $skip { E += \$3; M += \$4; count += 1 }
+        END {
+            avgE = E/count;
+            avgM = M/count;
+            avgE2 = E*E/count;
+            avgM2 = M*M/count;
+
+            C = (avgE2 - avgE*avgE) / \$1 / \$1;
+            X = (avgM2 - avgM*avgM) / \$1;
+
+            print \$1, avgE, avgM, avgE2, avgM2, C, X
+        }
+    " {} \
+    | tee $output_dir/suscept_capacity
