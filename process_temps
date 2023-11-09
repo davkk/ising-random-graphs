@@ -12,10 +12,9 @@ mkdir -p data/processed/$dirname
 
 find $path -type f \
     | xargs -I{} tail -n 1 {} \
-    | awk '{ print $1, $2, $3, $4 < 0 ? -1 * $4 : $4 }' \
     | tee data/processed/$dirname/temps \
     | awk '
-        { E[$1] += $3; M[$1] += $4 < 0 ? -1 * $4 : $4; count[$1] += 1 }
+        { E[$1] += $3; M[$1] += $4; count[$1] += 1 }
         END { for (t in E) print t, E[t]/count[t], M[t]/count[t] }
     ' \
     | sort -n -k 1,1 \

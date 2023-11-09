@@ -9,7 +9,7 @@ graph=$1
 steps=$2
 
 now=`date +%s`
-temps=`seq 150.0 10.0 350.0`
+temps=`seq 0.5 0.5 120.0`
 repeats=`seq 1 20`
 
 echo "[*] compiling..."

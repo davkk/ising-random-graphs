@@ -1,0 +1,22 @@
+#!/usr/bin/env gnuplot
+
+suscept = ARG1."/suscept"
+suscept_avg = ARG1."/suscept_avg"
+
+set terminal svg enhanced size 800,1000 font "serif,14"
+set out ARG1."/ising_suscept.svg"
+
+set title "Ising Model - Susceptibility"
+
+set multiplot layout 2,1
+
+set title "Susceptibility vs. Temperature"
+set xlabel "Temperature"
+set ylabel "Susceptibility"
+set grid
+set key top right
+plot suscept using 1:2 title "Susceptibility" lt rgb "gray", \
+     suscept_avg using 1:2 title "Mean value" with lines lt rgb "black" lw 4
+
+# Restore the default layout
+unset multiplot
