@@ -8,7 +8,7 @@ import numpy as np
 from . import estimate
 
 
-def shortpath(graph: nx.Graph):
+def single(graph: nx.Graph):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -23,7 +23,7 @@ def shortpath(graph: nx.Graph):
 
 
 @nb.njit(parallel=True, cache=True, fastmath=True)
-def matpower(*, graph: np.ndarray, r_max: np.uint8):
+def multiple(*, graph: np.ndarray, r_max: np.uint8):
     n = graph.shape[0]
     layers = np.zeros((r_max, n, n))
 
@@ -37,8 +37,9 @@ def matpower(*, graph: np.ndarray, r_max: np.uint8):
 
 
 class Method(Enum):
-    shortpath = "shortpath"
-    matpower = "matpower"
+    single = "single"
+    multiple = "multiple"
+    nearest = "nearest"
 
 
 def main():
@@ -75,17 +76,19 @@ def main():
     J, T_c = None, None
 
     match method:
-        case Method.matpower.value:
-            J = matpower(
+        case Method.single.value:
+            J = single(graph)
+            T_c = estimate.estimate_critical_temperature(n=n, p=p)
+            print(n, p, T_c)
+
+        case Method.multiple.value:
+            J = multiple(
                 graph=nx.to_numpy_array(graph, order="C"),
                 r_max=np.uint8(np.ceil(np.emath.logn((n - 1) * p, n))),
             )
 
-        case Method.shortpath.value:
-            J = shortpath(graph)
-            T_c = estimate.estimate_critical_temperature(n=n, p=p)
-
-    print(n, p, T_c)
+        case Method.nearest.value:
+            J = nx.to_numpy_array(graph)
 
     np.save(f"data/graphs/ER_{n=}_{p=}_{method}", J)
 
