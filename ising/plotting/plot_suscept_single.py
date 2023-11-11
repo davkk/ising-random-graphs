@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from ising.plotting.common import setup_pyplot
-from ising.plotting.suscept import plot_suscept
+from ising.plotting.common import plot_suscept, setup_pyplot
 
 setup_pyplot()
 
