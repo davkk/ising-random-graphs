@@ -6,16 +6,18 @@ if [[ $# -lt 1 ]]; then
 fi
 
 path=$1
-dirname=`basename $path`
 
-mkdir -p data/processed/$dirname
+dirname=`basename $path`
+output_dir=data/processed/$dirname
+
+mkdir -p $output_dir
 
 find $path -type f \
     | xargs -I{} tail -n 1 {} \
-    | tee data/processed/$dirname/temps \
+    | tee $output_dir/temps \
     | awk '
         { E[$1] += $3; M[$1] += $4; count[$1] += 1 }
-        END { for (t in E) print t, E[t]/count[t], M[t]/count[t] }
+        END { for (t in E) print t, E[t] / count[t], M[t] / count[t] }
     ' \
     | sort -n -k 1,1 \
-    > data/processed/$dirname/temps_avg
+    > $output_dir/temps_avg

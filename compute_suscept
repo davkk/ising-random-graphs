@@ -33,4 +33,4 @@ find $path -type f \
         END { for (t in count) print t, X[t] / count[t] }
     ' \
     | sort -n -k 1,1 \
-    > $output_dir/suscept_avg
+    | tee $output_dir/suscept_avg

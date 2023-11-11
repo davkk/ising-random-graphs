@@ -1,22 +1,35 @@
 #!/usr/bin/env gnuplot
 
-suscept = ARG1."/suscept"
-suscept_avg = ARG1."/suscept_avg"
+set terminal svg enhanced size 1200,900 font "serif,20"
+set out "~/projects/ising-random-graphs/plots/ising_suscept.svg"
 
-set terminal svg enhanced size 800,1000 font "serif,14"
-set out ARG1."/ising_suscept.svg"
+set multiplot layout ARGC,1
 
-set title "Ising Model - Susceptibility"
+do for [DATA = 1:ARGC] {
+    suscept = ARGV[DATA]."/suscept"
+    suscept_avg = ARGV[DATA]."/suscept_avg"
 
-set multiplot layout 2,1
+    stats suscept_avg using 1:2 nooutput
 
-set title "Susceptibility vs. Temperature"
-set xlabel "Temperature"
-set ylabel "Susceptibility"
-set grid
-set key top right
-plot suscept using 1:2 title "Susceptibility" lt rgb "gray", \
-     suscept_avg using 1:2 title "Mean value" with lines lt rgb "black" lw 4
+    set arrow 1 from STATS_pos_max_y,graph 0 rto 0,graph -0.1 back backhead
+    set label sprintf("%.1f", STATS_pos_max_y) center at STATS_pos_max_y,graph 0 offset 0,char -1.2
+    set arrow 2 from STATS_pos_max_y,graph 0 to STATS_pos_max_y,graph 1 nohead linestyle 0
 
-# Restore the default layout
+    set yrange [0:*]
+    set xlabel "Temperature"
+    set ylabel "Susceptibility"
+    set xtics
+    set key top right
+
+    if (DATA < ARGC) {
+        unset xlabel
+        unset xtics
+    }
+
+    plot suscept using 1:2 title "Susceptibility" lt rgb "gray", \
+         suscept_avg using 1:2 title "Mean value" with lines lt rgb "black" lw 4
+}
+
+set xtics
+
 unset multiplot

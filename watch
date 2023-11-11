@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+inotifywait -m -e modify --include py $1 | \
+while read -r dir action filename; do
+    python $dir$filename
+done

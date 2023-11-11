@@ -82,13 +82,16 @@ def main():
             print(n, p, T_c)
 
         case Method.multiple.value:
+            r_max=np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
             J = multiple(
                 graph=nx.to_numpy_array(graph, order="C"),
-                r_max=np.uint8(np.ceil(np.emath.logn((n - 1) * p, n))),
+                r_max=r_max,
             )
+            print(J, f"{r_max=}")
 
         case Method.nearest.value:
             J = nx.to_numpy_array(graph)
+            print(J)
 
     np.save(f"data/graphs/ER_{n=}_{p=}_{method}", J)
 

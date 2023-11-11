@@ -15,21 +15,21 @@ set multiplot layout 2,1
 
 # First subplot: Energy vs. Temperature
 set title "Energy vs. Temperature"
-set xlabel "Temperature"
-set ylabel "Energy"
+set xlabel "T"
+set ylabel "E"
 set grid
 set key top left
-plot temps using 1:3 title "Energy" lt rgb "gray", \
-     temps_avg using 1:2 title "Mean value" with lines lt rgb "blue" lw 4
+plot temps using 1:3 title "E" lt rgb "gray", \
+     temps_avg using 1:2 title "Mean" with lines lt rgb "blue" lw 4
 
 # Second subplot: Magnetization vs. Temperature
 set title "Magnetization vs. Temperature"
-set xlabel "Temperature"
-set ylabel "Magnetization"
+set xlabel "T"
+set ylabel "|M|"
 set grid
 set key top right
-plot temps using 1:4 title "Magnetization" lt rgb "gray", \
-     temps_avg using 1:3 title "Mean value" with lines lt rgb "red" lw 4
+plot temps using 1:4 title "|M|" lt rgb "gray", \
+     temps_avg using 1:3 title "Mean" with lines lt rgb "red" lw 4
 
 # Restore the default layout
 unset multiplot
