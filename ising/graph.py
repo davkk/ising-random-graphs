@@ -8,7 +8,7 @@ import numpy as np
 from . import estimate
 
 
-def single(graph: nx.Graph):
+def single_expon(*, graph: nx.Graph, alpha: float):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -17,7 +17,21 @@ def single(graph: nx.Graph):
         next(layers)
 
         for length, conn in layers:
-            edges[node, conn] = np.exp(-length + 1)
+            edges[node, conn] = np.exp(-alpha * (length - 1))
+
+    return edges
+
+
+def single_power(*, graph: nx.Graph, alpha: float):
+    n = graph.number_of_nodes()
+    edges = np.zeros((n, n), dtype=np.float64, order="C")
+
+    for node in graph.nodes():
+        layers = enumerate(nx.bfs_layers(graph, node))
+        next(layers)
+
+        for length, conn in layers:
+            edges[node, conn] = 1 / (length ** alpha)
 
     return edges
 
@@ -37,7 +51,8 @@ def multiple(*, graph: np.ndarray, r_max: np.uint8):
 
 
 class Method(Enum):
-    single = "single"
+    single_expon = "single_expon"
+    single_power = "single_power"
     multiple = "multiple"
     nearest = "nearest"
 
@@ -67,7 +82,14 @@ def main():
         required=True,
         help="probability for edge creation",
     )
-    method, n, p = parser.parse_args().__dict__.values()
+    parser.add_argument(
+        "-a",
+        metavar="int",
+        type=np.uint8,
+        help="alpha parameter",
+        default=1,
+    )
+    method, n, p, a = parser.parse_args().__dict__.values()
 
     if p and (p > 1 or p <= 0):
         parser.error("0 < p <= 1")
@@ -76,16 +98,19 @@ def main():
     J, T_c = None, None
 
     match method:
-        case Method.single.value:
-            J = single(graph)
+        case Method.single_expon.value:
+            J = single_expon(graph=graph, alpha=a)
             T_c = estimate.estimate_critical_temperature(n=n, p=p)
             print(n, p, T_c)
 
+        case Method.single_power.value:
+            J = single_power(graph=graph, alpha=a)
+            print(J)
+
         case Method.multiple.value:
-            r_max=np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
+            r_max = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
             J = multiple(
-                graph=nx.to_numpy_array(graph, order="C"),
-                r_max=r_max,
+                graph=nx.to_numpy_array(graph, order="C"), r_max=r_max, alpha=a
             )
             print(J, f"{r_max=}")
 
@@ -93,7 +118,7 @@ def main():
             J = nx.to_numpy_array(graph)
             print(J)
 
-    np.save(f"data/graphs/ER_{n=}_{p=}_{method}", J)
+    np.save(f"data/graphs/ER_{n=}_{p=}_{a=}_{method}", J)
 
 
 if __name__ == "__main__":
