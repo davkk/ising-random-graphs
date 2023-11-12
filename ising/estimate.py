@@ -3,10 +3,9 @@ import sys
 import numpy as np
 
 
-def estimate_critical_temperature(*, n, p):
+def estimate_critical_temperature(*, n, p, alpha):
     k = n * p
     # r_max = int(np.ceil(np.emath.logn(k, n)))
-    alpha = 1
 
     T_c = 0
     used = 0

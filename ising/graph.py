@@ -8,7 +8,7 @@ import numpy as np
 from . import estimate
 
 
-def single_expon(*, graph: nx.Graph, alpha: float):
+def single_expon(*, graph: nx.Graph, alpha: int):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -22,7 +22,7 @@ def single_expon(*, graph: nx.Graph, alpha: float):
     return edges
 
 
-def single_power(*, graph: nx.Graph, alpha: float):
+def single_power(*, graph: nx.Graph, alpha: int):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -31,19 +31,19 @@ def single_power(*, graph: nx.Graph, alpha: float):
         next(layers)
 
         for length, conn in layers:
-            edges[node, conn] = 1 / (length ** alpha)
+            edges[node, conn] = 1 / (length**alpha)
 
     return edges
 
 
-@nb.njit(parallel=True, cache=True, fastmath=True)
-def multiple(*, graph: np.ndarray, r_max: np.uint8):
+@nb.njit(parallel=True, cache=True)
+def multiple(*, graph: np.ndarray, r_max: np.uint8, alpha: int):
     n = graph.shape[0]
     layers = np.zeros((r_max, n, n))
 
-    for k in range(r_max):
+    for k in nb.prange(r_max):
         layers[k] = np.linalg.matrix_power(graph, k + 1)
-        layers[k] *= np.exp(-k + 1)
+        layers[k] *= np.exp(-alpha * (k - 1))
 
     layers = np.sum(layers, axis=0)
 
@@ -85,7 +85,7 @@ def main():
     parser.add_argument(
         "-a",
         metavar="int",
-        type=np.uint8,
+        type=np.int64,
         help="alpha parameter",
         default=1,
     )
@@ -100,7 +100,7 @@ def main():
     match method:
         case Method.single_expon.value:
             J = single_expon(graph=graph, alpha=a)
-            T_c = estimate.estimate_critical_temperature(n=n, p=p)
+            T_c = estimate.estimate_critical_temperature(n=n, p=p, alpha=a)
             print(n, p, T_c)
 
         case Method.single_power.value:
