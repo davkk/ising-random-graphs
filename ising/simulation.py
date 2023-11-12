@@ -11,7 +11,7 @@ def simulate(graph, steps, temp):
     n = graph.shape[0]
     spins = np.random.choice(np.array([-1.0, 1.0]), size=n)
 
-    energy = -0.5 * np.sum(np.dot(graph, spins) * spins)
+    energy = -0.5 * np.sum((graph @ spins) * spins)
     magnet = np.sum(spins)
 
     for step in range(1, steps * n + 1):
@@ -19,7 +19,7 @@ def simulate(graph, steps, temp):
 
         spin = spins[idx]
         edges = graph[idx]
-        neighbors = np.dot(edges, spins) - edges[idx] * spin
+        neighbors = edges @ spins - edges[idx] * spin
 
         dE = 2.0 * neighbors * spin
         dM = -2.0 * spin
