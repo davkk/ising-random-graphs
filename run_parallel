@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+function do_ising {
+    ising $1 100 $2 | tail -n 30
+}
+
+export -f do_ising
+
+parallel -j10 -k do_ising $1 $2 ::: {1..10} \
+    | awk '
+        { M += $4; M2 += $4 * $4; count += 1; }
+        NR % 30 == 0 {
+            avgM = M / count;
+            avgM2 = M2 / count;
+
+            X = (avgM2 - avgM * avgM) / $1;
+
+            M = 0;
+            M2 = 0;
+            count = 0;
+
+            print X;
+        }
+    '
