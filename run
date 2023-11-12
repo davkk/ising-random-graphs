@@ -10,13 +10,13 @@ steps=$2
 
 now=`date +%s`
 temps=`seq 0.5 0.5 30.0`
-repeats=`seq 1 20`
+repeats=`seq 1 10`
 
 echo "[*] compiling..."
 compile
 
 echo "[*] generating data..."
-parallel -j4 --lb --delay 0.1 --progress \
+parallel -j10 --lb --delay 0.1 --progress \
     --results data/raw/ising_${steps}_{1/.}_${now}/{2}/{3} \
     ising {1} $steps {2} \
     ::: $graph \
