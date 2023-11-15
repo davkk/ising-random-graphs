@@ -13,13 +13,13 @@ func main() {
 
 	queue := make(chan float64, 2)
 
-	temp := 3.0
 	for idx, graph := range graphs {
+		temp := 1.0
 		X_max := 0.0
 		T_max := 0.0
 
 		count := 0
-		for count < 5 {
+		for count < 10 {
 			cmd := exec.Command("./run_parallel", graph, fmt.Sprint(temp))
 			stdout, _ := cmd.Output()
 
@@ -38,6 +38,7 @@ func main() {
 			if X > X_max {
 				X_max = X
 				T_max = temp
+				fmt.Fprintln(os.Stderr, X_max, T_max)
 				count = 0
 			}
 
@@ -49,9 +50,9 @@ func main() {
 				}
 			}
 
-			temp += 0.5
+			temp += 0.02
 		}
 
-		fmt.Println(idx + 1, T_max)
+		fmt.Println(idx+1, T_max)
 	}
 }
