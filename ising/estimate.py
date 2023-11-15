@@ -5,7 +5,6 @@ import numpy as np
 
 def estimate_critical_temperature(*, n, p, alpha):
     k = n * p
-    # r_max = int(np.ceil(np.emath.logn(k, n)))
 
     T_c = 0
     used = 0
@@ -27,6 +26,7 @@ def main():
         estimate_critical_temperature(
             n=int(sys.argv[1]),
             p=float(sys.argv[2]),
+            alpha=int(sys.argv[3])
         )
     )
 

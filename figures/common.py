@@ -12,7 +12,7 @@ def setup_pyplot():
     plt.style.use("seaborn-v0_8-muted")
 
     plt.rcParams["figure.figsize"] = (14, 8)
-    plt.rcParams["figure.dpi"] = 300
+    # plt.rcParams["figure.dpi"] = 300
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["mathtext.fontset"] = "stix"
     plt.rcParams["xtick.direction"] = "in"
