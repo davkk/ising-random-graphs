@@ -9,7 +9,7 @@ def setup_pyplot():
     MEDIUM_SIZE = 16
     BIGGER_SIZE = 22
 
-    plt.style.use("seaborn-v0_8-muted")
+    plt.style.use("rose-pine-dawn")
 
     plt.rcParams["figure.figsize"] = (14, 8)
     # plt.rcParams["figure.dpi"] = 300

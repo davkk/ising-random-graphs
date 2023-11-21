@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if [[ $# -lt 3 ]]; then
+    echo "You need to pass arguments"
+    exit 0
+fi
+
+path=$1
+temp=$2
+now=$3
+
+filename=`basename $path`
+
+ising $path 200 $temp \
+    | tail -n 150 \
+    | mawk -f calc_suscept_avg.awk \
+    | tee -a data/raw/single/suscept_${filename%.*}_${now}.out

@@ -1,5 +1,6 @@
 import argparse
 from enum import Enum
+from pathlib import Path
 
 import networkx as nx
 import numba as nb
@@ -8,7 +9,7 @@ import numpy as np
 from . import estimate
 
 
-def single_expon(*, graph: nx.Graph, alpha: int):
+def single_expon(*, graph: nx.Graph, alpha: float):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -22,7 +23,7 @@ def single_expon(*, graph: nx.Graph, alpha: int):
     return edges
 
 
-def single_power(*, graph: nx.Graph, alpha: int):
+def single_power(*, graph: nx.Graph, alpha: float):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64, order="C")
 
@@ -37,7 +38,7 @@ def single_power(*, graph: nx.Graph, alpha: int):
 
 
 @nb.njit(parallel=True, cache=True)
-def multiple(*, graph: np.ndarray, r_max: np.uint8, alpha: int):
+def multiple(*, graph: np.ndarray, r_max: np.uint8, alpha: float):
     n = graph.shape[0]
     layers = np.zeros((r_max, n, n))
 
@@ -85,9 +86,9 @@ def main():
     parser.add_argument(
         "-a",
         metavar="int",
-        type=np.int64,
+        type=np.float64,
         help="alpha parameter",
-        default=1,
+        default=1.0,
     )
     method, n, p, a = parser.parse_args().__dict__.values()
 
@@ -97,11 +98,13 @@ def main():
     graph = nx.erdos_renyi_graph(n=n, p=p)
     J, T_c = None, None
 
+    path = Path("data/graphs/") / f"ER_{n=}_{p=}_{a=}_{method}.npy"
+
     match method:
         case Method.single_expon.value:
             J = single_expon(graph=graph, alpha=a)
             T_c = estimate.estimate_critical_temperature(n=n, p=p, alpha=a)
-            print(n, p, T_c)
+            print(path, T_c)
 
         case Method.single_power.value:
             J = single_power(graph=graph, alpha=a)
@@ -118,7 +121,7 @@ def main():
             J = nx.to_numpy_array(graph)
             print(J)
 
-    np.save(f"data/graphs/ER_{n=}_{p=}_{a=}_{method}", J)
+    np.save(path, J)
 
 
 if __name__ == "__main__":

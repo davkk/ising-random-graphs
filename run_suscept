@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+input=$1
+step=$2
+
+filename=`basename $input`
+now=`date +%s`
+
+cat $input \
+    | while read -r n p a method; do
+        read -r path T_mid <<< `gengraph -n $n -p $p -a $a --method $method`
+
+        go run find_tc_avg.go $path $T_mid $step $now \
+            | tee -a data/raw/${filename%.*}_${now}.out
+    done
