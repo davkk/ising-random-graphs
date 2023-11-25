@@ -36,8 +36,8 @@ func main() {
 
 	graph := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 
-	T_start := math.Max(2.0/3.0*T_mid, 2.0)
-	T_end := 2 * T_mid
+	T_start := math.Max(0.5*T_mid, 2.0)
+	T_end := 1.5 * T_mid
 
 	var X_avg float64
 	var X_std float64
@@ -64,14 +64,14 @@ func main() {
 			X_avg = mean(X_data[len(X_data)-5:])
 			X_std = variance(X_data[len(X_data)-5:])
 
-			if math.Abs(X-X_avg) > 4*X_std {
+			if math.Abs(X-X_avg) > 5*X_std {
 				X_data = X_data[:len(X_data)-1]
 				T_data = T_data[:len(T_data)-1]
 				continue
 			}
 		}
 
-		if X_avg-X_max > 0 && X_avg-X_max < 4*X_std {
+		if X_avg-X_max > 0 && X_avg-X_max < 5*X_std {
 			X_max = X_avg
 			T_max = T
 		}

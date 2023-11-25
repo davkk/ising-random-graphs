@@ -18,8 +18,7 @@ def simulate(graph, steps, temp):
         idx = np.random.randint(n)
 
         spin = spins[idx]
-        edges = graph[idx]
-        neighbors = edges @ spins - edges[idx] * spin
+        neighbors = graph[idx] @ spins
 
         dE = 2.0 * neighbors * spin
         dM = -2.0 * spin

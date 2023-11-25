@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from figures import common
+from ising import estimate
 
 common.setup_pyplot()
 
@@ -22,6 +23,13 @@ plt.plot(
     markersize=14,
     mew=2,
     linewidth=0.7,
+)
+
+xs = np.arange(1.0, 9.0, 0.01)
+plt.plot(
+    xs,
+    estimate.T(N=1000, k=(1000 - 1) * 0.004, a=xs),
+    color="#cecacd",
 )
 
 plt.xlabel(r"$\alpha$")

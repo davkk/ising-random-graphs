@@ -11,7 +11,7 @@ from . import estimate
 
 def single_expon(*, graph: nx.Graph, alpha: float):
     n = graph.number_of_nodes()
-    edges = np.zeros((n, n), dtype=np.float64, order="C")
+    edges = np.zeros((n, n), dtype=np.float64)
 
     for node in graph.nodes():
         layers = enumerate(nx.bfs_layers(graph, node))
@@ -38,17 +38,21 @@ def single_power(*, graph: nx.Graph, alpha: float):
 
 
 @nb.njit(parallel=True, cache=True)
-def multiple(*, graph: np.ndarray, r_max: np.uint8, alpha: float):
+def multiple(*, graph: np.ndarray, l_max: int, alpha: float):
     n = graph.shape[0]
-    layers = np.zeros((r_max, n, n))
+    J = np.zeros((n, n))
 
-    for k in nb.prange(r_max):
-        layers[k] = np.linalg.matrix_power(graph, k + 1)
-        layers[k] *= np.exp(-alpha * (k - 1))
+    for length in nb.prange(1, l_max + 1):
+        edges = np.linalg.matrix_power(graph, length)
+        for i in range(n):
+            for j in range(n):
+                if edges[i][j] > 0:
+                    J[i][j] += np.exp(-alpha * (length - 1))
 
-    layers = np.sum(layers, axis=0)
+    np.fill_diagonal(J, 0)
+    J /= np.max(J)
 
-    return layers / np.max(layers)
+    return J
 
 
 class Method(Enum):
@@ -98,24 +102,30 @@ def main():
     graph = nx.erdos_renyi_graph(n=n, p=p)
     J, T_c = None, None
 
+    k = (n - 1) * p
+
     path = Path("data/graphs/") / f"ER_{n=}_{p=}_{a=}_{method}.npy"
 
     match method:
         case Method.single_expon.value:
             J = single_expon(graph=graph, alpha=a)
-            T_c = estimate.estimate_critical_temperature(n=n, p=p, alpha=a)
+            T_c = estimate.T(N=n, k=k, a=a)
             print(path, T_c)
 
         case Method.single_power.value:
             J = single_power(graph=graph, alpha=a)
-            print(J)
+            T_c = estimate.T(N=n, k=k, a=a)
+            print(path, T_c)
 
         case Method.multiple.value:
-            r_max = np.uint8(np.ceil(np.emath.logn((n - 1) * p, n)))
+            l_max = np.emath.logn((k - 1), (1 + n * (k - 2) / k))
             J = multiple(
-                graph=nx.to_numpy_array(graph, order="C"), r_max=r_max, alpha=a
+                graph=nx.to_numpy_array(graph, order="C", dtype=np.float64),
+                l_max=int(l_max),
+                alpha=a,
             )
-            print(J, f"{r_max=}")
+            T_c = estimate.T(N=n, k=k, a=a)
+            print(path, T_c)
 
         case Method.nearest.value:
             J = nx.to_numpy_array(graph)

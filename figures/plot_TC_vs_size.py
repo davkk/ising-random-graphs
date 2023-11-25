@@ -5,14 +5,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from figures import common
+from ising import estimate
 
 common.setup_pyplot()
 
 files = [
     file
     for file in os.listdir(Path("data/processed"))
-    if "critical_size_ER" in file
+    if "critical_size_ER" in file and "single_expon" in file
 ]
+
+# files = ["critical_size_ER_a=2.0_k=4_multiple_1700946756.out"]
 
 markers = ["*", "1", "+", "2", ".", "3"]
 
@@ -29,11 +32,18 @@ for i, filename in enumerate(files):
         label=f"$\\alpha={a[i]}$",
     )
 
+    plt.plot(
+        N,
+        estimate.T(N=N, k=(N - 1) * p, a=a),
+        color="black",
+    )
 
 plt.grid(False)
 
 plt.xlabel(r"$N$")
 plt.ylabel(r"$T_C$")
+
+plt.xscale("log")
 
 plt.legend()
 
