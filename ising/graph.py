@@ -9,7 +9,7 @@ import numpy as np
 from . import estimate
 
 
-def single_expon(*, graph: nx.Graph, alpha: float):
+def single(*, graph: nx.Graph, alpha: float):
     n = graph.number_of_nodes()
     edges = np.zeros((n, n), dtype=np.float64)
 
@@ -23,31 +23,19 @@ def single_expon(*, graph: nx.Graph, alpha: float):
     return edges
 
 
-def single_power(*, graph: nx.Graph, alpha: float):
-    n = graph.number_of_nodes()
-    edges = np.zeros((n, n), dtype=np.float64, order="C")
-
-    for node in graph.nodes():
-        layers = enumerate(nx.bfs_layers(graph, node))
-        next(layers)
-
-        for length, conn in layers:
-            edges[node, conn] = 1 / (length**alpha)
-
-    return edges
-
-
 @nb.njit(parallel=True, cache=True)
-def multiple(*, graph: np.ndarray, l_max: int, alpha: float):
+def multiple(*, graph: np.ndarray, l_max: np.int64, alpha: np.float64):
     n = graph.shape[0]
-    J = np.zeros((n, n))
+    J = np.zeros_like(graph)
 
     for length in nb.prange(1, l_max + 1):
         edges = np.linalg.matrix_power(graph, length)
+
         for i in range(n):
             for j in range(n):
-                if edges[i][j] > 0:
-                    J[i][j] += np.exp(-alpha * (length - 1))
+                edges[i][j] *= np.exp(-alpha * (length - 1))
+
+        J += edges
 
     np.fill_diagonal(J, 0)
     J /= np.max(J)
@@ -56,8 +44,7 @@ def multiple(*, graph: np.ndarray, l_max: int, alpha: float):
 
 
 class Method(Enum):
-    single_expon = "single_expon"
-    single_power = "single_power"
+    single = "single"
     multiple = "multiple"
     nearest = "nearest"
 
@@ -107,13 +94,8 @@ def main():
     path = Path("data/graphs/") / f"ER_{n=}_{p=}_{a=}_{method}.npy"
 
     match method:
-        case Method.single_expon.value:
-            J = single_expon(graph=graph, alpha=a)
-            T_c = estimate.T(N=n, k=k, a=a)
-            print(path, T_c)
-
-        case Method.single_power.value:
-            J = single_power(graph=graph, alpha=a)
+        case Method.single.value:
+            J = single(graph=graph, alpha=a)
             T_c = estimate.T(N=n, k=k, a=a)
             print(path, T_c)
 
@@ -121,7 +103,7 @@ def main():
             l_max = np.emath.logn((k - 1), (1 + n * (k - 2) / k))
             J = multiple(
                 graph=nx.to_numpy_array(graph, order="C", dtype=np.float64),
-                l_max=int(l_max),
+                l_max=np.int64(l_max),
                 alpha=a,
             )
             T_c = estimate.T(N=n, k=k, a=a)
@@ -129,7 +111,8 @@ def main():
 
         case Method.nearest.value:
             J = nx.to_numpy_array(graph)
-            print(J)
+            T_c = k
+            print(path, T_c)
 
     np.save(path, J)
 

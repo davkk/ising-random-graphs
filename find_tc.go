@@ -5,9 +5,11 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 func mean(data []float64) float64 {
@@ -37,7 +39,7 @@ func main() {
 	graph := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 
 	T_start := math.Max(0.5*T_mid, 2.0)
-	T_end := 1.5 * T_mid
+	// T_end := 1.5 * T_mid
 
 	var X_avg float64
 	var X_std float64
@@ -48,7 +50,17 @@ func main() {
 	X_data := []float64{}
 	T_data := []float64{}
 
-	for T := T_start; T < T_end; T += step {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	stop := make(chan bool)
+	go func() {
+		// Wait for a signal
+		<-sigs
+		stop <- true
+	}()
+
+	for T := T_start; ; T += step {
 		stdout, err := exec.Command("./calc_suscept", path, fmt.Sprint(T), now).Output()
 		if err != nil {
 			panic(err)
@@ -63,20 +75,21 @@ func main() {
 		if len(X_data) > 5 {
 			X_avg = mean(X_data[len(X_data)-5:])
 			X_std = variance(X_data[len(X_data)-5:])
-
-			if math.Abs(X-X_avg) > 5*X_std {
-				X_data = X_data[:len(X_data)-1]
-				T_data = T_data[:len(T_data)-1]
-				continue
-			}
 		}
 
-		if X_avg-X_max > 0 && X_avg-X_max < 5*X_std {
+		if X_avg > X_max {
 			X_max = X_avg
 			T_max = T
 		}
 
 		fmt.Fprintf(os.Stderr, "[debug] %s: X_avg = %f, X_var = %f, T = %f\n", graph, X_avg, X_std, T)
+
+		select {
+		case <-stop:
+			break
+		default:
+			continue
+		}
 	}
 
 	fmt.Printf("%s_%s %f\n", graph, now, T_max)

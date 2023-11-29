@@ -1,0 +1,33 @@
+podatnosc:
+    5 symulacji po 200
+    lub jedna dluga
+
+przejscie alfa = 1 -> alfa = 2, itd.
+    alfa całkowite
+
+sprawdzic wszystko dla innych k
+
+
+diagram fazowy
+temp curie
+przejscie ciagle
+zjawiska krytyczne ?
+
+badanie w sieciach
+    sredniopolowe rozwiazanie modelu isinga
+        temp kryt zalezna od
+
+motywacja
+    oddzialywania w rzeczywistych maleja szybko z odlegloscia
+    ale sieci zlozone/przypadkowe szybko rosnie liczba sasiadow z odlegloscia
+    oznacza ze moze byc cos ciekawego
+        oddzialywanie z dalekimi sasiadami moze miec znaczenie
+    zalozenie ze wykladniczo
+        to rosnaca liczba sasiadow tez wykladniczo
+        tam wplyw dalszych sasiadow moze byc niezaniedbywalny
+
+siec bezskalowa
+    model isinga na sieciach zlozonych
+
+scopus -> literatura
+

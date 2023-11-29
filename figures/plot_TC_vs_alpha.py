@@ -10,12 +10,14 @@ common.setup_pyplot()
 
 alpha, T_C = np.loadtxt(
     Path("data/processed")
-    / "critical_alpha_ER_n=1000_p=0.004_single_expon_1700233751"
+    / "critical_alpha_ER_n=1000_p=0.004_single_1700233751"
 ).T
+
+k = (1000 - 1) * 0.004
 
 plt.grid(False)
 
-plt.axhline(y=4, color="lightgray", linestyle="--")
+plt.axhline(y=k, color="lightgray", linestyle="--")
 plt.plot(
     alpha,
     T_C,
@@ -23,6 +25,7 @@ plt.plot(
     markersize=14,
     mew=2,
     linewidth=0.7,
+    label="simulation points"
 )
 
 xs = np.arange(1.0, 9.0, 0.01)
@@ -30,7 +33,10 @@ plt.plot(
     xs,
     estimate.T(N=1000, k=(1000 - 1) * 0.004, a=xs),
     color="#cecacd",
+    label="analytical solution"
 )
+
+plt.legend()
 
 plt.xlabel(r"$\alpha$")
 plt.ylabel(r"$T_C$")

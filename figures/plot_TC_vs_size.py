@@ -12,20 +12,25 @@ common.setup_pyplot()
 files = [
     file
     for file in os.listdir(Path("data/processed"))
-    if "critical_size_ER" in file and "single_expon" in file
+    if "critical_size_ER" in file and "single" in file
 ]
-
-# files = ["critical_size_ER_a=2.0_k=4_multiple_1700946756.out"]
+files.sort()
+k = 4
 
 markers = ["*", "1", "+", "2", ".", "3"]
+
+xs = np.array([100, 4000])
+ys = estimate.T(N=xs, k=k, a=np.log(k - 1))
+print(ys)
+plt.plot(xs, ys)
 
 for i, filename in enumerate(files):
     N, p, a, T_C = np.loadtxt(Path("data/processed") / filename).T
 
-    plt.plot(
+    dataplot = plt.plot(
         N,
         T_C,
-        "--" + markers[i],
+        markers[i],
         markersize=14,
         mew=2,
         linewidth=0.7,
@@ -35,7 +40,7 @@ for i, filename in enumerate(files):
     plt.plot(
         N,
         estimate.T(N=N, k=(N - 1) * p, a=a),
-        color="black",
+        color=dataplot[0].get_color(),
     )
 
 plt.grid(False)
