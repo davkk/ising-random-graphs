@@ -15,14 +15,10 @@ files = [
     if "critical_size_ER" in file and "single" in file
 ]
 files.sort()
-k = 4
 
 markers = ["*", "1", "+", "2", ".", "3"]
 
-xs = np.array([100, 4000])
-ys = estimate.T(N=xs, k=k, a=np.log(k - 1))
-print(ys)
-plt.plot(xs, ys)
+xs = np.arange(50, 100000)
 
 for i, filename in enumerate(files):
     N, p, a, T_C = np.loadtxt(Path("data/processed") / filename).T
@@ -38,9 +34,12 @@ for i, filename in enumerate(files):
     )
 
     plt.plot(
-        N,
-        estimate.T(N=N, k=(N - 1) * p, a=a),
+        xs,
+        estimate.T(N=xs, k=(N[i] - 1) * p[i], a=a[i]),
+        "--",
         color=dataplot[0].get_color(),
+        linewidth=0.7,
+        label=" ",
     )
 
 plt.grid(False)
@@ -50,7 +49,7 @@ plt.ylabel(r"$T_C$")
 
 plt.xscale("log")
 
-plt.legend()
+plt.legend(loc="upper left", ncol=2)
 
 plt.tight_layout()
 plt.savefig(Path("figures") / "TC_vs_size.pdf", dpi=300)

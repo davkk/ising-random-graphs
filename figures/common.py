@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def setup_pyplot():
     SMALL_SIZE = 14
     MEDIUM_SIZE = 16
@@ -20,6 +21,9 @@ def setup_pyplot():
     plt.rcParams["axes.formatter.limits"] = -3, 3
     plt.rcParams["axes.grid"] = True
     plt.rcParams["grid.color"] = "gainsboro"
+    plt.rcParams["figure.facecolor"] = "white"
+    plt.rcParams["axes.facecolor"] = "white"
+    plt.rcParams["savefig.facecolor"] = "white"
 
     plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
     plt.rc("axes", titlesize=SMALL_SIZE)  # fontsize of the axes title
@@ -73,7 +77,9 @@ def plot_suscept(*, data_dirs: list[str], title: str, output_name: str):
 
         n = 100 * 10**idx
         p = 0.04 / 10**idx
-        ax[idx].set_title(f"${n=}$, ${p=}$, $\langle k \\rangle\\approx 4$")
+        ax[idx].set_title(
+            f"${n=}$, ${p=}$, $\langle k \\rangle\\approx 4$, $\\alpha=1.0$"
+        )
 
     ax[0].legend().set_visible(True)
 

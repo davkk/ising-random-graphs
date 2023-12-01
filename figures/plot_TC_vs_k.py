@@ -18,7 +18,7 @@ k = (N - 1) * p
 plt.plot(
     k,
     T_C,
-    "--+",
+    "+",
     markersize=14,
     mew=2,
     linewidth=0.7,
@@ -28,7 +28,9 @@ plt.plot(
 plt.plot(
     k,
     estimate.T(N=N, k=k, a=a),
-    color="black",
+    "--",
+    color="#cecacd",
+    label="analytical approximation"
 )
 
 plt.grid(False)
