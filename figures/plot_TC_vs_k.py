@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -8,30 +9,38 @@ from ising import estimate
 
 common.setup_pyplot()
 
-filename = "critical_k_ER_n=1000_a=2.0_single_1701203782.out"
+markers = ["*", "1", "+", "2", ".", "3"]
+
+files = [
+    file
+    for file in os.listdir(Path("data/processed"))
+    if "critical_k_ER" in file and "single" in file
+]
+files.sort()
 
 markers = ["*", "1", "+", "2", ".", "3"]
 
-N, p, a, T_C = np.loadtxt(Path("data/processed") / filename).T
-k = (N - 1) * p
+for idx, file in enumerate(files):
+    N, p, a, T_C = np.loadtxt(Path("data/processed") / file).T
+    k = (N - 1) * p
 
-plt.plot(
-    k,
-    T_C,
-    "+",
-    markersize=14,
-    mew=2,
-    linewidth=0.7,
-    label="simulation points",
-)
+    dataplot = plt.plot(
+        k,
+        T_C,
+        markers[idx],
+        markersize=14,
+        mew=3,
+        label=f"$\\alpha={a[idx]}$",
+    )
 
-plt.plot(
-    k,
-    estimate.T(N=N, k=k, a=a),
-    "--",
-    color="#cecacd",
-    label="analytical approximation"
-)
+    plt.plot(
+        k,
+        estimate.T(N=N, k=k, a=a),
+        "--",
+        color=dataplot[0].get_color(),
+        linewidth=1.2,
+        label=" ",
+    )
 
 plt.grid(False)
 

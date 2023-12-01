@@ -28,7 +28,7 @@ for i, filename in enumerate(files):
         T_C,
         markers[i],
         markersize=14,
-        mew=2,
+        mew=3,
         linewidth=0.7,
         label=f"$\\alpha={a[i]}$",
     )
@@ -38,7 +38,7 @@ for i, filename in enumerate(files):
         estimate.T(N=xs, k=(N[i] - 1) * p[i], a=a[i]),
         "--",
         color=dataplot[0].get_color(),
-        linewidth=0.7,
+        linewidth=1.2,
         label=" ",
     )
 

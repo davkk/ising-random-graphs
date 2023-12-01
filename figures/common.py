@@ -34,7 +34,7 @@ def setup_pyplot():
     plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
-def plot_suscept(*, data_dirs: list[str], title: str, output_name: str):
+def plot_suscept(*, data_dirs: list[str], output_name: str):
     fig, ax = plt.subplots(len(data_dirs), 1, sharex=True)
 
     for idx, data_dir in enumerate(data_dirs):
@@ -83,7 +83,6 @@ def plot_suscept(*, data_dirs: list[str], title: str, output_name: str):
 
     ax[0].legend().set_visible(True)
 
-    fig.suptitle(title)
     fig.supxlabel("$T$")
     fig.supylabel("$\chi$")
 

@@ -25,6 +25,7 @@
 \topmargin=-2cm
 \oddsidemargin=0cm
 
+\setlength{\parindent}{0em}
 \setlength{\parskip}{0.6em}
 \setlength{\jot}{12pt}
 
@@ -78,36 +79,71 @@ For this thesis, I have chosen to focus my analysis on an Erdős-Renyi graph $G_
     \braket{k} = (N-1) \cdot p
 \end{equation}
 
+\todo{mean-field}
+
+\todo{general solution to mean field}
+
 \section{Motivation}
 
 \section{Literature Review}
-\begin{itemize}
-\item review existing literature on the Ising model
-\end{itemize}
+
+Several works were found that include similar fields of study. 
+Simulation of Ising model on small-networks ...
 
 \section{Analytical mean-field approximation for critical temperature}
 
-\section{Simulation}
+For the purpose of a comparative analysis, we derived a formula that is based on the mean-field approximation was derived. To start with, we assume that interaction strength between spins undergoes exponential decay over longer distances, denoted by $l$. This decay can be represented as $\exp[-\alpha (l-1)]$. The parameter $\alpha$ was added for better control over the decay speed.
 
+Since we consider a model with unlimited, long-range interactions, the sum of all neighbors at a given distance is equal to the total number of spins, $N$. We can approximate, that root spin will have $\braket{k}=k$ neighbors and at each consecutive path length, $(k-1)$. Therefore, we can write such sum as
+
+\begin{equation}\label{eqn:N_l}
+    N = \sum_{l=1}^{l_{\max}} N_l = \sum_{l=1}^{l_{\max}} k (k-1)^{(l-1)}.
+\end{equation}
+
+The formula \eqref{eqn:N_l} is a finite geometric series, which can be simplified into
+
+\begin{equation}\label{eqn:geom_series}
+    N = k \sum_{l=1}^{l_{\max}} (k-1)^{(l-1)} = k\frac{(1 - q^{l_{\max}})}{(1 - q)},\ \text{where}\ q=k-1.
+\end{equation}
+
+Then, by using the above, we can obtain a formula for maximum path length, $l_{\max}$, in the ER graph as
+
+\begin{equation}
+    l_{\max} = \log_{(k-1)}{\left[N\frac{(k-2)}{k} + 1\right]}.
+\end{equation}
+
+Based on the general mean-field solution, the critical temperature, $T_C$, is given by
+
+\begin{equation}\label{eqn:base_tc}
+    k_B T_C = J \sum_{l=1}^{l_{\max}} N_l~ e^{-\alpha (l-1)} = kJ \sum_{l=1}^{l_{\max}} \left[e^{-\alpha}(k-1)\right]^{(l-1)},
+\end{equation}
+
+which again is a geometric series. Similar to \eqref{eqn:geom_series}, the equation \eqref{eqn:base_tc} can be simplified, but this time with the common ratio of $q=e^{-\alpha}(k-1)$.
+
+When we make $k_B=1$ and $J=1$, the final analytical mean-field formula for the critical temperature, $T_C$, is
+
+\begin{equation}
+    T_C = \frac{1 - [e^{-\alpha}(k-1)]^{\log_{(k-1)}{\left[N\frac{(k-2)}{k} + 1\right]}}}{1 - e^{-\alpha}(k-1)}.
+\end{equation}
+
+Key point that emerges following the above derivation, is that there are two distinct regions of behavior of the system. The value of $q=\exp[-\alpha](k-1)$ geometric series in \eqref{eqn:base_tc} 
+
+\section{Simulation}
 \subsection{Methodology}
 
 \subsection{Results and Discussion}
 
 \todo{differences between J generation methods with k constant}
 
-\section{Conculsion}
+\section{Conclusion}
 
-% \begin{figure}[ht!]
-%     \includegraphics[width=\textwidth]{../figures/suscept_ER_nearest.pdf}
-% \end{figure}
-%
-% \begin{figure}[ht!]
-%     \includegraphics[width=\textwidth]{../figures/suscept_ER_single.pdf}
-% \end{figure}
-%
-% \begin{figure}[ht!]
-%     \includegraphics[width=\textwidth]{../figures/suscept_ER_multiple.pdf}
-% \end{figure}
+\begin{figure}[ht!]
+    \includegraphics[width=\linewidth]{../figures/suscept_ER_nearest.pdf}
+\end{figure}
+
+\begin{figure}[ht!]
+    \includegraphics[width=\linewidth]{../figures/suscept_ER_single.pdf}
+\end{figure}
 
 \todo{$T_C$ vs. k with n kept constant}
 \begin{figure}[ht!]
@@ -117,6 +153,10 @@ For this thesis, I have chosen to focus my analysis on an Erdős-Renyi graph $G_
 \todo{$T_C$ vs. $\alpha$ for exponential decay}
 \begin{figure}[ht!]
     \includegraphics[width=\linewidth]{../figures/TC_vs_size.pdf}
+\end{figure}
+
+\begin{figure}[ht!]
+    \includegraphics[width=\linewidth]{../figures/TC_vs_k.pdf}
 \end{figure}
 
 \todo{$e^{-\alpha k}$ vs. $1/k^\alpha$}

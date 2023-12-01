@@ -29,9 +29,9 @@ for idx, file in enumerate(files):
         T_C,
         markers[idx],
         markersize=14,
-        mew=2,
+        mew=3,
         linewidth=0.7,
-        label=f"$k\\approx{int(k)}$",
+        label=f"$\\langle k\\rangle\\approx{int(k)}$",
     )
 
     xs = np.arange(1.0, 9.0, 0.01)
@@ -39,8 +39,8 @@ for idx, file in enumerate(files):
         xs,
         estimate.T(N=1000, k=k, a=xs),
         "--",
-        linewidth=0.7,
         color=dataplot[0].get_color(),
+        linewidth=1.2,
         label=" ",
     )
 
