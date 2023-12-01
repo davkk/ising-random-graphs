@@ -11,7 +11,7 @@ now=$3
 
 filename=`basename $path`
 
-ising $path 200 $temp \
-    | tail -n 150 \
+ising $path 250 $temp \
+    | tail -n 200 \
     | mawk -f calc_suscept_avg.awk \
     | tee -a data/raw/single/suscept_${filename%.*}_${now}.out

@@ -53,11 +53,11 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	stop := make(chan bool)
 	go func() {
 		// Wait for a signal
 		<-sigs
-		stop <- true
+		fmt.Printf("%s_%s %f\n", graph, now, T_max)
+		os.Exit(0)
 	}()
 
 	for T := T_start; ; T += step {
@@ -83,14 +83,5 @@ func main() {
 		}
 
 		fmt.Fprintf(os.Stderr, "[debug] %s: X_avg = %f, X_var = %f, T = %f\n", graph, X_avg, X_std, T)
-
-		select {
-		case <-stop:
-			break
-		default:
-			continue
-		}
 	}
-
-	fmt.Printf("%s_%s %f\n", graph, now, T_max)
 }

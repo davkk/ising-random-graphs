@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+trap '' INT
+
 input=$1
 step=$2
 

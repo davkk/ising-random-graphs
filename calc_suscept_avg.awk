@@ -3,7 +3,7 @@
     M2 += $4 * $4;
     count += 1;
 }
-NR % 150 == 0 {
+NR % 200 == 0 {
     total_count += 1;
 
     avgM += M / count;
