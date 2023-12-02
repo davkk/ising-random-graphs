@@ -13,6 +13,7 @@
 \usepackage{tabularx}
 \usepackage{braket}
 \usepackage{pdfpages}
+\usepackage{svg}
 
 \usepackage{multicol}
 \usepackage{colortbl}
@@ -108,7 +109,7 @@ The formula \eqref{eqn:N_l} is a finite geometric series, which can be simplifie
 
 Then, by using the above, we can obtain a formula for maximum path length, $l_{\max}$, in the ER graph as
 
-\begin{equation}
+\begin{equation}\label{eqn:l_max}
     l_{\max} = \log_{(k-1)}{\left[N\frac{(k-2)}{k} + 1\right]}.
 \end{equation}
 
@@ -118,17 +119,24 @@ Based on the general mean-field solution, the critical temperature, $T_C$, is gi
     k_B T_C = J \sum_{l=1}^{l_{\max}} N_l~ e^{-\alpha (l-1)} = kJ \sum_{l=1}^{l_{\max}} \left[e^{-\alpha}(k-1)\right]^{(l-1)},
 \end{equation}
 
-which again is a geometric series. Similar to \eqref{eqn:geom_series}, the equation \eqref{eqn:base_tc} can be simplified, but this time with the common ratio of $q=e^{-\alpha}(k-1)$.
+which once more is a geometric series. Similar to \eqref{eqn:geom_series}, the equation \eqref{eqn:base_tc} can be simplified, but this time with the common ratio of $q=e^{-\alpha}(k-1)$.
 
-When we make $k_B=1$ and $J=1$, the final analytical mean-field formula for the critical temperature, $T_C$, is
+When we make $k_B=1$, $J=1$ and use \eqref{eqn:l_max}, the final analytical mean-field formula for the critical temperature, $T_C$, is
 
 \begin{equation}
     T_C = \frac{1 - [e^{-\alpha}(k-1)]^{\log_{(k-1)}{\left[N\frac{(k-2)}{k} + 1\right]}}}{1 - e^{-\alpha}(k-1)}.
 \end{equation}
 
-Key point that emerges following the above derivation, is that there are two distinct regions of behavior of the system. The value of $q=\exp[-\alpha](k-1)$ geometric series in \eqref{eqn:base_tc} 
+The key point that emerges, following the above derivation, is that there are two distinct regions of behavior of the system. The sum in \eqref{eqn:base_tc} converges only when $|q|<1$, thus when $\exp[\alpha] > (k-1)$.
+
+Therefore, we find the equation describing boundary separating those regions to be
+
+\begin{equation}
+    e^\alpha = k-1.
+\end{equation}
 
 \section{Simulation}
+
 \subsection{Methodology}
 
 \subsection{Results and Discussion}
@@ -140,6 +148,7 @@ Key point that emerges following the above derivation, is that there are two dis
 \begin{figure}[ht!]
     \includegraphics[width=\linewidth]{../figures/suscept_ER_nearest.pdf}
 \end{figure}
+
 
 \begin{figure}[ht!]
     \includegraphics[width=\linewidth]{../figures/suscept_ER_single.pdf}
@@ -161,5 +170,9 @@ Key point that emerges following the above derivation, is that there are two dis
 
 \todo{$e^{-\alpha k}$ vs. $1/k^\alpha$}
 
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.7\linewidth]{../figures/phase-diagram.pdf}
+\end{figure}
 
 \end{document}
