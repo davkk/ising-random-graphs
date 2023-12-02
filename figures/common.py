@@ -11,7 +11,7 @@ def setup_pyplot():
 
     plt.style.use("rose-pine-dawn")
 
-    plt.rcParams["figure.figsize"] = (14, 8)
+    plt.rcParams["figure.figsize"] = (12, 7)
     # plt.rcParams["figure.dpi"] = 300
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["mathtext.fontset"] = "stix"
@@ -33,8 +33,14 @@ def setup_pyplot():
     plt.rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
     plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    markers = ["*", "1", "+", "2", ".", "3"]
+    return colors, markers
+
 
 def plot_suscept(*, data_dirs: list[str], output_name: str):
+    setup_pyplot()
+
     fig, ax = plt.subplots(len(data_dirs), 1, sharex=True)
 
     for idx, data_dir in enumerate(data_dirs):

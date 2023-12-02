@@ -1,9 +1,6 @@
 from pathlib import Path
 
-from figures.common import plot_suscept, setup_pyplot
-
-setup_pyplot()
-
+from figures.common import plot_suscept
 
 plot_suscept(
     data_dirs=[

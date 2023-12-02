@@ -7,9 +7,7 @@ import numpy as np
 from figures import common
 from ising import estimate
 
-common.setup_pyplot()
-
-markers = ["*", "1", "+", "2", ".", "3"]
+colors, markers = common.setup_pyplot()
 
 files = [
     file
@@ -17,8 +15,6 @@ files = [
     if "critical_k_ER" in file and "single" in file
 ]
 files.sort()
-
-markers = ["*", "1", "+", "2", ".", "3"]
 
 for idx, file in enumerate(files):
     N, p, a, T_C = np.loadtxt(Path("data/processed") / file).T
@@ -36,8 +32,7 @@ for idx, file in enumerate(files):
     plt.plot(
         k,
         estimate.T(N=N, k=k, a=a),
-        "--",
-        color=dataplot[0].get_color(),
+        color=f"{dataplot[0].get_color()}88",
         linewidth=1.2,
         label=" ",
     )

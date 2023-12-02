@@ -1,7 +1,6 @@
 \documentclass[11pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
-\usepackage[MeX]{polski}
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{color}
@@ -139,7 +138,43 @@ Therefore, we find the equation describing boundary separating those regions to 
 
 \subsection{Methodology}
 
+In order to perform the simulation, we used Metropolis algorithm. It consists of the following steps:
+\begin{itemize}
+    \item Generate the ER graph with a probability parameter $p$ and $N$ spins, each initialized with a random value of either +1 or -1.
+    \item The main loop:
+        \begin{itemize}
+            \item Take a randomly selected spin $s$ with a uniform probability $\mathbb{P}(s)=1/N$.
+            \item Calculate the change in system's energy as $dE = 2 s \sum\limits_{\braket{i,j}}^\text{neighbors} J_{ij} s_j$
+            \item If $dE\leq0$, we flip the spin, else if $dE>0$, we flip only when $x < \exp[-dE/T]$ is satisfied (where $x$ is a random number, drawn from range $[0,1]$)
+            \item Continue to the next iteration until we reach the set number of steps.
+        \end{itemize}
+\end{itemize}
+
+During one time step ($N$ iterations), each spin will be flipped, on average, at least once.
+
+For the first 0-30 time steps, with temperatures lower than the critical $T_C$, the system tends towards equilibrium. For larger than $T_C$ however, it typically oscillates around some value.
+
+We show this in the figure \ref{fig:mag_vs_time} by looking at how magnetization changes with time step. In this case, for the highest temperature $T=100$, it fluctuates around zero, indicating a state in which approximately half of the spins are pointing up and the other half are pointing down.
+
+\begin{figure}[ht!]
+    \centering
+    \caption{\textbf{Magnetization vs. time step}}
+    \includegraphics[width=\linewidth]{../figures/magnet_vs_steps.pdf}
+    \label{fig:mag_vs_time}
+\end{figure}
+
+The simulations were performed on random graphs of differing sizes and parameters. Typically, we chose $N=100,200,400,1000,2000,4000$ and $10000$.
+
+
 \subsection{Results and Discussion}
+
+\begin{figure}[ht!]
+    \centering
+    \caption{\textbf{Energy and Magnetization vs. time step}}
+    \includegraphics[width=\linewidth]{../figures/energy_magnet_vs_temp.pdf}
+\end{figure}
+
+
 
 \todo{differences between J generation methods with k constant}
 

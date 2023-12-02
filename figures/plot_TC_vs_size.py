@@ -7,7 +7,7 @@ import numpy as np
 from figures import common
 from ising import estimate
 
-common.setup_pyplot()
+colors, markers = common.setup_pyplot()
 
 files = [
     file
@@ -15,8 +15,6 @@ files = [
     if "critical_size_ER" in file and "single" in file
 ]
 files.sort()
-
-markers = ["*", "1", "+", "2", ".", "3"]
 
 xs = np.arange(50, 100000)
 
@@ -36,8 +34,7 @@ for i, filename in enumerate(files):
     plt.plot(
         xs,
         estimate.T(N=xs, k=(N[i] - 1) * p[i], a=a[i]),
-        "--",
-        color=dataplot[0].get_color(),
+        color=f"{dataplot[0].get_color()}88",
         linewidth=1.2,
         label=" ",
     )
