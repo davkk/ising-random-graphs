@@ -67,7 +67,7 @@ Depending on the sign of an interaction constant $J$, the evolution of the syste
 
 \subsection{Random graphs}
 
-Since then, the model has been successively extended and applied to various disciplines beyond physics. There exist various ways of extending the model.
+The Ising model has been successively extended and applied to various disciplines beyond physics. There exist various ways of extending the model.
 
 One could for instance change the topography of the spin lattice. By employing the Ising model on random graphs, one can study e.g. how information spreads through a social network, shedding light on the mechanisms that govern the diffusion of ideas, opinions, or trends within these complex systems. This approach not only contributes to the understanding of social dynamics but also showcases the versatility of the Ising model in capturing the essence of diverse real-world scenarios.
 
@@ -85,7 +85,7 @@ For this thesis, I have chosen to focus my analysis on an Erdős-Renyi graph $G_
 
 \section{Motivation}
 
-\section{Literature Review}
+\section{Literature review}
 
 Several works were found that include similar fields of study. 
 Simulation of Ising model on small-networks ...
@@ -136,18 +136,27 @@ Therefore, we find the equation describing boundary separating those regions to 
 
 \section{Simulation}
 
-\subsection{Methodology}
+\subsection{Path generation models for the spin interactions}
+
+When generating interaction matrix from edges of a given Erdős-Renyi graph, we explored different models for finding paths between spins, including the ones of long-range.
+
+Initially, we considered a model where two spins can interact with each other through multiple connections. This could possibly be achieved by raising the adjacency matrix $A=[a_{ij}]$ of a graph to some set power. For a given power $l$, $A^l$ will result in a new matrix in which each item represents the number of walks of length $l$ between the $i$-th and $j$-th spin.
+
+However, this approach raised concerns regarding potential overestimation of interaction counts. The cumulative nature of matrix powers could lead to an inaccurate representation of the actual connectivity between spins. Self-loops in the graph could also contribute to the growth of matrix powers and their impact might be disproportionate. Additionally, selecting an inappropriate power may again yield misleading insights. These issues prompted a reevaluation of our strategy.
+
+Therefore, we opted for a more precise approach, which was the usage of Breadth-First Search (BFS) algorithm to find the shortest path of a chosen length. This way, two given spins interact with each other exclusively through a single connection.
+
+\subsection{The algorithm}
 
 In order to perform the simulation, we used Metropolis algorithm. It consists of the following steps:
 \begin{itemize}
-    \item Generate the ER graph with a probability parameter $p$ and $N$ spins, each initialized with a random value of either +1 or -1.
-    \item The main loop:
-        \begin{itemize}
-            \item Take a randomly selected spin $s$ with a uniform probability $\mathbb{P}(s)=1/N$.
-            \item Calculate the change in system's energy as $dE = 2 s \sum\limits_{\braket{i,j}}^\text{neighbors} J_{ij} s_j$
-            \item If $dE\leq0$, we flip the spin, else if $dE>0$, we flip only when $x < \exp[-dE/T]$ is satisfied (where $x$ is a random number, drawn from range $[0,1]$)
-            \item Continue to the next iteration until we reach the set number of steps.
-        \end{itemize}
+\item Generate the ER graph with a probability parameter $p$ and $N$ spins, each initialized with a random value of either +1 or -1.
+\item Repeat until the set number of steps has been reached:
+    \begin{itemize}
+    \item Take a randomly selected spin $s$ with a uniform probability $\mathbb{P}(s)=1/N$.
+    \item Calculate the change in system's energy as $dE = 2 s \sum\limits_{\braket{i,j}}^\text{neighbors} J_{ij} s_j$
+    \item If $dE\leq0$, we flip the spin, else if $dE>0$, we flip only when $x < \exp[-dE/T]$ is satisfied (where $x$ is a random number, drawn from range $[0,1]$)
+    \end{itemize}
 \end{itemize}
 
 During one time step ($N$ iterations), each spin will be flipped, on average, at least once.
@@ -162,9 +171,6 @@ We show this in the figure \ref{fig:mag_vs_time} by looking at how magnetization
     \includegraphics[width=\linewidth]{../figures/magnet_vs_steps.pdf}
     \label{fig:mag_vs_time}
 \end{figure}
-
-The simulations were performed on random graphs of differing sizes and parameters. Typically, we chose $N=100,200,400,1000,2000,4000$ and $10000$.
-
 
 \subsection{Results and Discussion}
 
