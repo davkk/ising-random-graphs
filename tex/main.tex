@@ -62,8 +62,13 @@ The Hamiltonian $H$ of such model can therefore be described as:
     H = -\frac12\sum_{\langle i,j \rangle} J_{ij} s_i s_j + \mu\sum_i h_i s_i
 \end{equation}
 
-Depending on the sign of an interaction constant $J$, the evolution of the system differs. Hence, in case of $J>0$ (ferromagnetic interaction), if neighboring spins are aligned in the same direction, the energy is lowered, and if they are aligned oppositely, the energy is increased. However, when $J<0$, indicating  an antiferromagnetic interaction, the dynamics of the model undergo a reversal.
+When analyzing the model without any magnetic field ($B=0$), only the first term remains.
 
+Depending on the sign of an interaction constant $J$, the evolution of the system differs. Hence, in case of $J>0$ (ferromagnetic interaction), if neighboring spins are aligned in the same direction the energy is lowered, and if they are aligned oppositely the energy is increased. However, when $J<0$, indicating an antiferromagnetic interaction, the dynamics of the model undergo a reversal.
+
+\subsection{The mean-field solution}
+
+A useful tool that we used for the analytical calculations is the mean-field theory. 
 
 \subsection{Random graphs}
 
@@ -71,7 +76,12 @@ The Ising model has been successively extended and applied to various discipline
 
 One could for instance change the topography of the spin lattice. By employing the Ising model on random graphs, one can study e.g. how information spreads through a social network, shedding light on the mechanisms that govern the diffusion of ideas, opinions, or trends within these complex systems. This approach not only contributes to the understanding of social dynamics but also showcases the versatility of the Ising model in capturing the essence of diverse real-world scenarios.
 
-\todo{exemplary graph figure}
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=\linewidth]{../figures/ER_graph.pdf}
+    \caption{Examples of generated ER networks}
+\end{figure}
+
 
 For this thesis, I have chosen to focus my analysis on an Erdős-Renyi graph $G_{N,p}$. Such network is constructed by choosing a number of edges for each node, with some probability described by a parameter $p$. Moreover, the average number of nearest neighbors for each node is given by the following equation:
 
@@ -155,7 +165,13 @@ However, this approach raised concerns regarding potential overestimation of int
 
 Therefore, we opted for a more precise approach, which was the usage of Breadth-First Search (BFS) algorithm to find the shortest path of a chosen length. This way, two given spins interact with each other exclusively through a single connection.
 
-\todo{differences between J generation methods with k constant}
+\begin{figure}[ht!]
+    \centering
+    \caption{\textbf{Path generation methods comparison}}
+    \includegraphics[width=\linewidth]{../figures/single_vs_multiple.pdf}
+\end{figure}
+\pagebreak
+
 
 \subsection{The simulation algorithm}
 
