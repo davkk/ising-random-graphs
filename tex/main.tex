@@ -83,12 +83,21 @@ For this thesis, I have chosen to focus my analysis on an Erdős-Renyi graph $G_
 
 \todo{general solution to mean field}
 
+
 \section{Motivation}
+
+In real-world scenarios, interactions typically diminish swiftly as distance increases. However, within complex networks, particularly in random or complex graphs, the number of neighbors grows rapidly with distance. This contrast serves as a motivation to explore the implications of such connectivity patterns within complex systems.
+
+To systematically explore this phenomenon, we therefore adopt the assumption of exponential decay in interaction strength with distance. Simultaneously, we are aware of the rapid growth in the count of neighbors with increasing sizes of the complex networks.
+
+Hence we recognize the potential significance of such long-range interactions between distant nodes, contrary to the typical neglect of such influences in models of physical systems.
+
 
 \section{Literature review}
 
 Several works were found that include similar fields of study. 
 Simulation of Ising model on small-networks ...
+
 
 \section{Analytical mean-field approximation for critical temperature}
 
@@ -146,7 +155,9 @@ However, this approach raised concerns regarding potential overestimation of int
 
 Therefore, we opted for a more precise approach, which was the usage of Breadth-First Search (BFS) algorithm to find the shortest path of a chosen length. This way, two given spins interact with each other exclusively through a single connection.
 
-\subsection{The algorithm}
+\todo{differences between J generation methods with k constant}
+
+\subsection{The simulation algorithm}
 
 In order to perform the simulation, we used Metropolis algorithm. It consists of the following steps:
 \begin{itemize}
@@ -180,9 +191,6 @@ We show this in the figure \ref{fig:mag_vs_time} by looking at how magnetization
     \includegraphics[width=\linewidth]{../figures/energy_magnet_vs_temp.pdf}
 \end{figure}
 
-
-
-\todo{differences between J generation methods with k constant}
 
 \section{Conclusion}
 
