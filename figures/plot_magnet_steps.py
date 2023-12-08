@@ -19,7 +19,7 @@ for idx, temp in enumerate(temps):
     _, steps, E, M = np.loadtxt(path / "1").T
     plt.plot(
         steps,
-        E,
+        M,
         markers[idx + 1],
         mew=2,
         markersize=10,
@@ -31,7 +31,7 @@ for idx, temp in enumerate(temps):
 plt.legend(loc="lower right")
 
 plt.xlabel("$t$")
-plt.ylabel("$M$")
+plt.ylabel("$|M|$")
 
 plt.tight_layout()
 plt.savefig(Path("figures") / "magnet_vs_steps.pdf")

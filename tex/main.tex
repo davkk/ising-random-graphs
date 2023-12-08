@@ -47,7 +47,7 @@ The Ising model, renowned for its simplicity and effectiveness in capturing phas
 
 \section{Introduction}
 
-Historically, the Ising model has played a crucial role in the development of statistical mechanics and the understanding of critical phenomena. The starting point - one-dimensional Ising model - was solved exactly by Ernst Ising's advisor, Wilhelm Lenz, in 1920. However, the two-dimensional case remained unsolved for many years until the solution has been found independently by Lars Onsager in 1944, marking a significant breakthrough.
+Historically, the Ising model has played a crucial role in the development of statistical mechanics and the understanding of critical phenomena.  Though, the model was initially invented by Ernst's advisor Wilhelm Lenz, in 1920, the one-dimensional Ising model was solved exactly by Ernst Ising himself in his 1924 thesis. The two-dimensional case however, remained unsolved for many years until the solution has been found independently by Lars Onsager in 1944, marking a significant breakthrough.
 
 
 \subsection{The Ising model}
@@ -59,16 +59,26 @@ The energy of the system is determined by the interactions between neighboring s
 The Hamiltonian $H$ of such model can therefore be described as:
 
 \begin{equation}
-    H = -\frac12\sum_{\langle i,j \rangle} J_{ij} s_i s_j + \mu\sum_i h_i s_i
+    H = -\frac12\sum_{\langle i,j \rangle} J_{ij} s_i s_j + h\sum_i s_i
 \end{equation}
 
 When analyzing the model without any magnetic field ($B=0$), only the first term remains.
 
 Depending on the sign of an interaction constant $J$, the evolution of the system differs. Hence, in case of $J>0$ (ferromagnetic interaction), if neighboring spins are aligned in the same direction the energy is lowered, and if they are aligned oppositely the energy is increased. However, when $J<0$, indicating an antiferromagnetic interaction, the dynamics of the model undergo a reversal.
 
+
+\subsection{Phase transitions}
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.7\linewidth]{../figures/phase-diagram.pdf}
+\end{figure}
+
+
 \subsection{The mean-field solution}
 
 A useful tool that we used for the analytical calculations is the mean-field theory. 
+
 
 \subsection{Random graphs}
 
@@ -181,7 +191,7 @@ In order to perform the simulation, we used Metropolis algorithm. It consists of
 \item Repeat until the set number of steps has been reached:
     \begin{itemize}
     \item Take a randomly selected spin $s$ with a uniform probability $\mathbb{P}(s)=1/N$.
-    \item Calculate the change in system's energy as $dE = 2 s \sum\limits_{\braket{i,j}}^\text{neighbors} J_{ij} s_j$
+    \item Calculate the change in system's energy as $dE = 2 s \sum_{j\in z_i} J_{ij} s_j$\\ ($z_i$ - neighbors of $i$-th spin)
     \item If $dE\leq0$, we flip the spin, else if $dE>0$, we flip only when $x < \exp[-dE/T]$ is satisfied (where $x$ is a random number, drawn from range $[0,1]$)
     \end{itemize}
 \end{itemize}
@@ -190,11 +200,11 @@ During one time step ($N$ iterations), each spin will be flipped, on average, at
 
 For the first 0-30 time steps, with temperatures lower than the critical $T_C$, the system tends towards equilibrium. For larger than $T_C$ however, it typically oscillates around some value.
 
-We show this in the figure \ref{fig:mag_vs_time} by looking at how magnetization changes with time step. In this case, for the highest temperature $T=100$, it fluctuates around zero, indicating a state in which approximately half of the spins are pointing up and the other half are pointing down.
+We show this in the figure \ref{fig:mag_vs_time} by looking at how magnetization changes with time step. The ordering of the spins is best achieved for the lowest temperatures, like $T=20$. However, for the highest temperature $T=100$, the magnetization fluctuates around zero, indicating a state in which approximately half of the spins are pointing up and the other half are pointing down.
 
 \begin{figure}[ht!]
     \centering
-    \caption{\textbf{Magnetization vs. time step}}
+    \caption{\textbf{Magnetization vs. time step} -- ER: $N=10\,000$, $p=0.0004$}
     \includegraphics[width=\linewidth]{../figures/magnet_vs_steps.pdf}
     \label{fig:mag_vs_time}
 \end{figure}
@@ -219,25 +229,16 @@ We show this in the figure \ref{fig:mag_vs_time} by looking at how magnetization
     \includegraphics[width=\linewidth]{../figures/suscept_ER_single.pdf}
 \end{figure}
 
-\todo{$T_C$ vs. k with n kept constant}
 \begin{figure}[ht!]
     \includegraphics[width=\linewidth]{../figures/TC_vs_alpha.pdf}
 \end{figure}
 
-\todo{$T_C$ vs. $\alpha$ for exponential decay}
 \begin{figure}[ht!]
     \includegraphics[width=\linewidth]{../figures/TC_vs_size.pdf}
 \end{figure}
 
 \begin{figure}[ht!]
     \includegraphics[width=\linewidth]{../figures/TC_vs_k.pdf}
-\end{figure}
-
-\todo{$e^{-\alpha k}$ vs. $1/k^\alpha$}
-
-\begin{figure}[ht!]
-    \centering
-    \includegraphics[width=0.7\linewidth]{../figures/phase-diagram.pdf}
 \end{figure}
 
 \end{document}

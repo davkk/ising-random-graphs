@@ -16,7 +16,7 @@ files = [
 ]
 files.sort()
 
-xs = np.arange(50, 100000)
+xs = np.arange(50, 100000, 100)
 
 for i, filename in enumerate(files):
     N, p, a, T_C = np.loadtxt(Path("data/processed") / filename).T

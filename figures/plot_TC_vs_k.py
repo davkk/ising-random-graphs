@@ -16,6 +16,8 @@ files = [
 ]
 files.sort()
 
+xs = np.arange(0.002, 0.025, 0.0005)
+
 for idx, file in enumerate(files):
     N, p, a, T_C = np.loadtxt(Path("data/processed") / file).T
     k = (N - 1) * p
@@ -30,8 +32,8 @@ for idx, file in enumerate(files):
     )
 
     plt.plot(
-        k,
-        estimate.T(N=N, k=k, a=a),
+        (N[idx] - 1) * xs,
+        estimate.T(N=N[idx], k=(N[idx] - 1) * xs, a=a[idx]),
         color=f"{dataplot[0].get_color()}88",
         linewidth=1.2,
         label=" ",
