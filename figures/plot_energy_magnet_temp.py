@@ -54,4 +54,4 @@ plt.savefig(
     Path("figures") / "energy_magnet_vs_temp.pdf",
     dpi=300,
 )
-plt.show()
+# plt.show()

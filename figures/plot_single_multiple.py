@@ -59,4 +59,4 @@ fig.supylabel("$X$")
 
 plt.tight_layout()
 plt.savefig(Path("figures") / "single_vs_multiple.pdf")
-plt.show()
+# plt.show()

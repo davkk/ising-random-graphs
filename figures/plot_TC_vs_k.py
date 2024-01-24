@@ -34,8 +34,8 @@ for idx, file in enumerate(files):
     plt.plot(
         (N[idx] - 1) * xs,
         estimate.T(N=N[idx], k=(N[idx] - 1) * xs, a=a[idx]),
-        color=f"{dataplot[0].get_color()}88",
-        linewidth=1.2,
+        color=dataplot[0].get_color(),
+        linewidth=1.5,
         label=" ",
     )
 
@@ -48,4 +48,4 @@ plt.legend()
 
 plt.tight_layout()
 plt.savefig(Path("figures") / "TC_vs_k.pdf", dpi=300)
-plt.show()
+# plt.show()

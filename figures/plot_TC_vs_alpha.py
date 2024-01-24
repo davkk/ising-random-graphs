@@ -1,3 +1,4 @@
+import math
 import os
 from pathlib import Path
 
@@ -29,15 +30,15 @@ for idx, file in enumerate(files):
         markersize=14,
         mew=3,
         linewidth=0.7,
-        label=f"$\\langle k\\rangle\\approx{int(k)}$",
+        label=f"$\\langle k\\rangle\\approx{math.ceil(k)}$",
     )
 
     xs = np.arange(1.0, 9.0, 0.01)
     plt.plot(
         xs,
         estimate.T(N=1000, k=k, a=xs),
-        color=f"{dataplot[0].get_color()}88",
-        linewidth=1.2,
+        color=dataplot[0].get_color(),
+        linewidth=1.5,
         label=" ",
     )
 
@@ -56,4 +57,4 @@ plt.ylim(1, 20)
 
 plt.tight_layout()
 plt.savefig(Path("figures") / "TC_vs_alpha.pdf", dpi=300)
-plt.show()
+# plt.show()

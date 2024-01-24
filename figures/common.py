@@ -11,7 +11,7 @@ def setup_pyplot():
 
     plt.style.use("rose-pine-dawn")
 
-    plt.rcParams["figure.figsize"] = (12, 7)
+    plt.rcParams["figure.figsize"] = (9, 6)
     # plt.rcParams["figure.dpi"] = 300
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["mathtext.fontset"] = "stix"
@@ -21,9 +21,13 @@ def setup_pyplot():
     plt.rcParams["axes.formatter.limits"] = -3, 3
     plt.rcParams["axes.grid"] = True
     plt.rcParams["grid.color"] = "gainsboro"
-    plt.rcParams["figure.facecolor"] = "white"
-    plt.rcParams["axes.facecolor"] = "white"
-    plt.rcParams["savefig.facecolor"] = "white"
+
+    # plt.rcParams["figure.facecolor"] = "white"
+    # plt.rcParams["axes.facecolor"] = "white"
+    # plt.rcParams["savefig.facecolor"] = "white"
+    # plt.rcParams["figure.edgecolor"] = "black"
+    # plt.rcParams["axes.edgecolor"] = "black"
+    # plt.rcParams["savefig.edgecolor"] = "black"
 
     plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
     plt.rc("axes", titlesize=SMALL_SIZE)  # fontsize of the axes title
@@ -38,7 +42,7 @@ def setup_pyplot():
     return colors, markers
 
 
-def plot_suscept(*, data_dirs: list[str], output_name: str):
+def plot_suscept(*, data_dirs: list[Path], output_name: str):
     setup_pyplot()
 
     fig, ax = plt.subplots(len(data_dirs), 1, sharex=True)
@@ -71,7 +75,7 @@ def plot_suscept(*, data_dirs: list[str], output_name: str):
         ax[idx].annotate(
             f"$T_C\\approx{max_x}$",
             xy=(max_x, max_y),
-            xytext=(30, 30),
+            xytext=(30, 25),
             textcoords="offset points",
             arrowprops=dict(
                 facecolor="#286983",

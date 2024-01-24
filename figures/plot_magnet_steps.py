@@ -30,9 +30,9 @@ for idx, temp in enumerate(temps):
 
 plt.legend(loc="lower right")
 
-plt.xlabel("$t$")
+plt.xlabel("MC step")
 plt.ylabel("$|M|$")
 
 plt.tight_layout()
 plt.savefig(Path("figures") / "magnet_vs_steps.pdf")
-plt.show()
+# plt.show()

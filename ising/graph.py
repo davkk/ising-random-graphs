@@ -1,4 +1,5 @@
 import argparse
+import math
 from enum import Enum
 from pathlib import Path
 
@@ -43,10 +44,30 @@ def multiple(*, graph: np.ndarray, l_max: np.int64, alpha: np.float64):
     return J
 
 
+def lattice2d(*, graph: nx.Graph, alpha: float):
+    n = graph.number_of_nodes()
+    size = math.ceil(np.sqrt(n))
+    edges = np.zeros((n, n), dtype=np.float64)
+
+    for node in graph.nodes():
+        layers = enumerate(nx.bfs_layers(graph, node))
+        next(layers)
+
+        x1, y1 = node
+        for length, conns in layers:
+            for x2, y2 in conns:
+                edges[x1 + y1 * size, x2 + y2 * size] = np.exp(
+                    -alpha * (length - 1)
+                )
+
+    return edges
+
+
 class Method(Enum):
     single = "single"
     multiple = "multiple"
     nearest = "nearest"
+    lattice2d = "lattice2d"
 
 
 def main():
@@ -111,6 +132,18 @@ def main():
 
         case Method.nearest.value:
             J = nx.to_numpy_array(graph)
+            T_c = k
+            print(path, T_c)
+
+        case Method.lattice2d.value:
+            J = lattice2d(
+                graph=nx.grid_2d_graph(
+                    math.ceil(np.sqrt(n)),
+                    math.ceil(np.sqrt(n)),
+                    periodic=True,
+                ),
+                alpha=a,
+            )
             T_c = k
             print(path, T_c)
 

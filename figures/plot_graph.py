@@ -26,4 +26,4 @@ fig.tight_layout()
 
 # now = int(datetime.now().timestamp())
 plt.savefig(Path("figures") / "ER_graph.pdf")
-plt.show()
+# plt.show()
