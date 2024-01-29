@@ -21,7 +21,7 @@ def setup_pyplot():
     plt.rcParams["axes.formatter.limits"] = -3, 3
     plt.rcParams["axes.grid"] = True
     plt.rcParams["grid.color"] = "gainsboro"
-
+    plt.rcParams["axes.formatter.use_mathtext"] = True
     # plt.rcParams["figure.facecolor"] = "white"
     # plt.rcParams["axes.facecolor"] = "white"
     # plt.rcParams["savefig.facecolor"] = "white"
@@ -91,6 +91,12 @@ def plot_suscept(*, data_dirs: list[Path], output_name: str):
             f"${n=}$, ${p=}$, $\langle k \\rangle\\approx 4$, $\\alpha=1.0$"
         )
 
+        y_max = data[1].max()
+        exponent = -int(np.floor(np.log10(y_max)))
+        y_max = int(y_max * 10**exponent) + 1
+        y_max /= 10**exponent
+        ax[idx].set_yticks(np.linspace(0, round(y_max, exponent), 3))
+
     ax[0].legend().set_visible(True)
 
     fig.supxlabel("$T$")
@@ -99,3 +105,4 @@ def plot_suscept(*, data_dirs: list[Path], output_name: str):
     fig.tight_layout()
 
     plt.savefig(Path("figures") / output_name)
+    # plt.show()

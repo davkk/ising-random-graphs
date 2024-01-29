@@ -38,9 +38,6 @@ def multiple(*, graph: np.ndarray, l_max: np.int64, alpha: np.float64):
 
         J += edges
 
-    np.fill_diagonal(J, 0)
-    J /= np.max(J)
-
     return J
 
 
